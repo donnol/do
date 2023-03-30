@@ -1,14 +1,3 @@
-# do
-
-Do something interesting.
-
-Base Go1.18 with generic.
-
-## Must
-
-Panic if error is not nil, otherwise return some result except the error.
-
-```go
 package main
 
 import (
@@ -37,4 +26,3 @@ func retErrAndOneResult() (int, error) {
 func retErrAndTwoResult() (int, int, error) {
 	return 0, 1, fmt.Errorf("a new error")
 }
-```
