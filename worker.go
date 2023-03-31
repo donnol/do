@@ -150,19 +150,14 @@ func (w *Worker) do(job Job) {
 }
 
 func (w *Worker) doWithTimeout(ctx context.Context, job Job) {
-	var retChan = make(chan struct{})
-	defer close(retChan)
-
 	// 执行
 	ctx, cancel := context.WithTimeout(ctx, job.timeout)
 	defer cancel()
-	go func(ctx context.Context, retChan chan struct{}) {
+	go func(ctx context.Context) {
 		defer func() {
 			if r := recover(); r != nil {
 				logger.Printf("job exec: %+v\n", r)
 			}
-
-			retChan <- struct{}{}
 		}()
 
 		// 这里不能直接这样调，如果job.run()执行的时间很长，将不会在超时后停止
@@ -172,20 +167,7 @@ func (w *Worker) doWithTimeout(ctx context.Context, job Job) {
 		if err := job.run(ctx); err != nil {
 			w.errChan <- err
 		}
-	}(ctx, retChan)
-
-	// 超时
-	timer := time.NewTimer(job.timeout)
-	select {
-	case <-retChan: // 子线程完成了，马上返回，无需再等
-		return
-	case t := <-timer.C:
-		// 时间到了，要发送消息给子线程，让它停止运行
-		// 通过`defer cancel()`
-
-		logger.Printf("job timeout: %+v\n", t)
-		return
-	}
+	}(ctx)
 }
 
 func (w *Worker) handleError() {

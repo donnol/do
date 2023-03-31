@@ -2,6 +2,7 @@ package do
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"testing"
 	"time"
@@ -72,10 +73,11 @@ func TestWorkerBuffer(t *testing.T) {
 			t.Error(err)
 		}
 
-		bl := w.jobChan.BufLen()
-		if bl != 0 {
-			_ = bl
-		}
+		// cause DATA RACE
+		// bl := w.jobChan.BufLen()
+		// if bl != 0 {
+		// 	_ = bl
+		// }
 	}
 	t.Log("finish")
 
@@ -87,10 +89,14 @@ func TestWorkerWithTimeout(t *testing.T) {
 	w.Start()
 
 	job := NewJob(func(ctx context.Context) error {
-		for i := 0; i < 10; i++ {
-			time.Sleep(500 * time.Millisecond)
+		for {
+			select {
+			case <-ctx.Done():
+				return fmt.Errorf("timeout exceed")
+			default:
+				time.Sleep(500 * time.Millisecond)
+			}
 		}
-		return nil
 	}, 5*time.Second, func(err error) {
 		log.Printf("err is %v\n", err)
 	})
