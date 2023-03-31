@@ -1,6 +1,6 @@
 # do
 
-[![GoDoc][doc-img]][doc] [![Go Report Card](https://goreportcard.com/badge/github.com/donnol/do)](https://goreportcard.com/report/github.com/donnol/do)
+[![GoDoc](https://pkg.go.dev/badge/github.com/donnol/do)](https://pkg.go.dev/github.com/donnol/do) [![Go Report Card](https://goreportcard.com/badge/github.com/donnol/do)](https://goreportcard.com/report/github.com/donnol/do)
 
 Do something interesting.
 
