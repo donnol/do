@@ -35,7 +35,7 @@ func (f *finderOfUser) NewScanObjAndFields(colTypes []*sql.ColumnType) (r *UserF
 	return
 }
 
-// 这样可以省去一个inital参数，但是不能推断出R的实际类型，就需要手动传入类型参数，这样就需要写多个代码，因此暂时不使用这个函数签名
+// 这样可以省去一个initial参数，但是不能推断出R的实际类型，就需要手动传入类型参数，这样就需要写多个代码，因此暂时不使用这个函数签名
 func FindAll1[S do.Storer, F do.Finder[R], R any](db S, finder F) (r []R, err error) {
 	return
 }

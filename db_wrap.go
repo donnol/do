@@ -128,7 +128,7 @@ func WrapConnFindAll[F Finder[R], R any](
 	ctx context.Context,
 	db *sql.DB,
 	finder F,
-	inital R,
+	initial R,
 ) (r []R, err error) {
 
 	if err = WrapSQLConn(ctx, db, func(ctx context.Context, conn *sql.Conn) error {
@@ -149,7 +149,7 @@ func WrapTxFindAll[F Finder[R], R any](
 	ctx context.Context,
 	db *sql.DB,
 	finder F,
-	inital R,
+	initial R,
 ) (r []R, err error) {
 
 	if err = WrapTx(ctx, db, func(ctx context.Context, tx *sql.Tx) error {

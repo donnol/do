@@ -63,7 +63,7 @@ func FindFirst[S Storer, F Finder[R], R any](db S, finder F, res *R) (err error)
 
 // FindAll
 // sql里select的字段数量必须与R的ScanFields方法返回的数组元素数量一致
-func FindAll[S Storer, F Finder[R], R any](db S, finder F, inital R) (r []R, err error) {
+func FindAll[S Storer, F Finder[R], R any](db S, finder F, initial R) (r []R, err error) {
 	query, args := finder.Query()
 	rows, err := db.QueryContext(context.TODO(), query, args...) // sql里select了n列
 	if err != nil {
@@ -91,8 +91,8 @@ func FindAll[S Storer, F Finder[R], R any](db S, finder F, inital R) (r []R, err
 	return
 }
 
-func FindOne[S Storer, F Finder[R], R any](db S, finder F, inital R) (r R, err error) {
-	res, err := FindAll(db, finder, inital)
+func FindOne[S Storer, F Finder[R], R any](db S, finder F, initial R) (r R, err error) {
+	res, err := FindAll(db, finder, initial)
 	if err != nil {
 		return r, err
 	}
