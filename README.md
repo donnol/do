@@ -1,5 +1,7 @@
 # do
 
+[![GoDoc][doc-img]][doc] [![Go Report Card](https://goreportcard.com/badge/github.com/donnol/do)](https://goreportcard.com/report/github.com/donnol/do)
+
 Do something interesting.
 
 Base Go1.18 with generic.
