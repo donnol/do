@@ -1,6 +1,6 @@
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
-github.com/donnol/do v0.2.0 h1:FsueTORe3wjvGLT6BnrKjhGbKjeF+8mdAtdntSERoPc=
-github.com/donnol/do v0.2.0/go.mod h1:HT3qUgYKThAjtMfMmhZJg3It1LeQfpilKaw8YF2V9jo=
+github.com/donnol/do v0.3.0 h1:e9LdAwWoXUAUyd6vBksoxXmuaYmlNSKSQ2/Njni77Yw=
+github.com/donnol/do v0.3.0/go.mod h1:HT3qUgYKThAjtMfMmhZJg3It1LeQfpilKaw8YF2V9jo=
 github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD/E=
 github.com/jinzhu/inflection v1.0.0/go.mod h1:h+uFLlag+Qp1Va5pdKtLDYj+kHp5pxUVkryuEj+Srlc=
 github.com/jinzhu/now v1.1.4/go.mod h1:d3SSVoowX0Lcu0IBviAWJpolVfI5UJVZZ7cO71lE/z8=
