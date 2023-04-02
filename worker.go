@@ -140,34 +140,15 @@ func (w *Worker) do(job Job) {
 		// 执行
 		ctx := context.Background()
 		if job.timeout > 0 {
-			w.doWithTimeout(ctx, job)
-		} else {
-			if err := job.run(ctx); err != nil {
-				w.errChan <- err
-			}
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, job.timeout)
+			defer cancel()
 		}
-	}(job)
-}
 
-func (w *Worker) doWithTimeout(ctx context.Context, job Job) {
-	// 执行
-	ctx, cancel := context.WithTimeout(ctx, job.timeout)
-	defer cancel()
-	go func(ctx context.Context) {
-		defer func() {
-			if r := recover(); r != nil {
-				logger.Printf("job exec: %+v\n", r)
-			}
-		}()
-
-		// 这里不能直接这样调，如果job.run()执行的时间很长，将不会在超时后停止
-		// 正确的做法应该是传入一个stopper管道，用户端代码需要适时检查该管道，判断是否需要停止
-		// 参照'github.com/eapache/go-resiliency'的deadline包
-		// 所以，传入ctx
 		if err := job.run(ctx); err != nil {
 			w.errChan <- err
 		}
-	}(ctx)
+	}(job)
 }
 
 func (w *Worker) handleError() {
