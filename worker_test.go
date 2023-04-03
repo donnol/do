@@ -65,7 +65,7 @@ func TestWorkerBuffer(t *testing.T) {
 		if err := w.Push(Job{
 			doctx: func(ctx context.Context) error {
 				_ = tmp
-				time.Sleep(500 * time.Millisecond)
+				time.Sleep(50 * time.Millisecond)
 
 				return nil
 			},
@@ -79,9 +79,11 @@ func TestWorkerBuffer(t *testing.T) {
 		// 	_ = bl
 		// }
 	}
-	t.Log("finish")
+	t.Log("wait...")
 
 	w.Stop()
+
+	t.Log("finish.")
 }
 
 func TestWorkerWithTimeout(t *testing.T) {
@@ -89,16 +91,21 @@ func TestWorkerWithTimeout(t *testing.T) {
 	w.Start()
 
 	job := NewJob(func(ctx context.Context) error {
+		// 使用for select监听ctx.Done，在业务逻辑执行间隔检查是否超时
 		for {
 			select {
 			case <-ctx.Done():
 				return fmt.Errorf("timeout exceed")
 			default:
+				// 模拟业务逻辑 -- 为了留出间隔检查超时，如果是大任务需要分批执行；
+				log.Printf("runing...")
 				time.Sleep(500 * time.Millisecond)
 			}
 		}
-	}, 5*time.Second, func(err error) {
-		log.Printf("err is %v\n", err)
+	}, 1*time.Second, func(err error) {
+		if err.Error() != "timeout exceed" {
+			t.Errorf("not exist timeout error")
+		}
 	})
 	if err := w.Push(*job); err != nil {
 		t.Error(err)
