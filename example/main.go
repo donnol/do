@@ -10,9 +10,9 @@ func main() {
 	do.Must(retErr()) // without result
 
 	// specify result type with type parameter
-	_ = do.Must1[int](retErrAndOneResult()) // with one result
+	_ = do.Must1(retErrAndOneResult()) // with one result
 
-	_, _ = do.Must2[int, int](retErrAndTwoResult()) // with two result
+	_, _ = do.Must2(retErrAndTwoResult()) // with two result
 }
 
 func retErr() error {
