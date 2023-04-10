@@ -34,9 +34,6 @@ const (
 )
 
 func TestMust(t *testing.T) {
-	t.Run("not error", func(t *testing.T) {
-		do.Must("not error")
-	})
 	t.Run("nil", func(t *testing.T) {
 		do.Must(nil)
 	})
@@ -116,4 +113,55 @@ func TestMust(t *testing.T) {
 
 		do.Must(err)
 	})
+}
+
+func fm1() (int, error) {
+	return 1, nil
+}
+
+func fm2() (int, string, error) {
+	return 1, "", nil
+}
+
+func fm3() (int, string, string, error) {
+	return 1, "", "", nil
+}
+
+func fm4() (int, string, string, float64, error) {
+	return 1, "", "", 0, nil
+}
+
+func fm5() (int, string, string, float64, float64, error) {
+	return 1, "", "", 0, 1, nil
+}
+
+func TestMustN(t *testing.T) {
+	r := do.Must1(fm1())
+	if r != 1 {
+		t.Errorf("bad case: %v != %v", r, 1)
+	}
+	{
+		r1, r2 := do.Must2(fm2())
+		if r1 != 1 && r2 != "" {
+			t.Errorf("bad case: %v != %v", r, 1)
+		}
+	}
+	{
+		r1, r2, r3 := do.Must3(fm3())
+		if r1 != 1 && r2 != "" && r3 != "" {
+			t.Errorf("bad case: %v != %v", r, 1)
+		}
+	}
+	{
+		r1, r2, r3, r4 := do.Must4(fm4())
+		if r1 != 1 && r2 != "" && r3 != "" && r4 != 0 {
+			t.Errorf("bad case: %v != %v", r, 1)
+		}
+	}
+	{
+		r1, r2, r3, r4, r5 := do.Must5(fm5())
+		if r1 != 1 && r2 != "" && r3 != "" && r4 != 0 && r5 != 0 {
+			t.Errorf("bad case: %v != %v", r, 1)
+		}
+	}
 }

@@ -2,70 +2,53 @@ package do
 
 import "fmt"
 
-// Must args的最后一个是非空错误时panic，无结果返回
-func Must(args ...any) {
-	mustCheckArgs(1, args...)
+// Must err是非空错误时panic，无结果返回
+func Must(err error) {
+	mustCheckError(err)
 }
 
-// Must1 args的最后一个是非空错误时panic，返回1个结果
-func Must1[T any](args ...any) (r T) {
-	l := len(args)
-	mustCheckArgs(2, args...)
+// Must1 err是非空错误时panic，返回1个结果
+func Must1[T any](a1 T, err error) T {
+	mustCheckError(err)
 
-	r = args[l-2].(T)
-
-	return
+	return a1
 }
 
-// Must2 args的最后一个是非空错误时panic，返回2个结果
-func Must2[T1, T2 any](args ...any) (r1 T1, r2 T2) {
-	l := len(args)
-	mustCheckArgs(3, args...)
+// Must2 err是非空错误时panic，返回2个结果
+func Must2[T1, T2 any](a1 T1, a2 T2, err error) (T1, T2) {
+	mustCheckError(err)
 
-	r2 = args[l-2].(T2)
-	r1 = args[l-3].(T1)
-
-	return
+	return a1, a2
 }
 
-// Must3 args的最后一个是非空错误时panic，返回3个结果
-func Must3[T1, T2, T3 any](args ...any) (r1 T1, r2 T2, r3 T3) {
-	l := len(args)
-	mustCheckArgs(4, args...)
+// Must3 err是非空错误时panic，返回3个结果
+func Must3[T1, T2, T3 any](a1 T1, a2 T2, a3 T3, err error) (T1, T2, T3) {
+	mustCheckError(err)
 
-	r3 = args[l-2].(T3)
-	r2 = args[l-3].(T2)
-	r1 = args[l-4].(T1)
-
-	return
+	return a1, a2, a3
 }
 
-// Must4 args的最后一个是非空错误时panic，返回4个结果
-func Must4[T1, T2, T3, T4 any](args ...any) (r1 T1, r2 T2, r3 T3, r4 T4) {
-	l := len(args)
-	mustCheckArgs(5, args...)
+// Must4 err是非空错误时panic，返回4个结果
+func Must4[T1, T2, T3, T4 any](a1 T1, a2 T2, a3 T3, a4 T4, err error) (T1, T2, T3, T4) {
+	mustCheckError(err)
 
-	r4 = args[l-2].(T4)
-	r3 = args[l-3].(T3)
-	r2 = args[l-4].(T2)
-	r1 = args[l-5].(T1)
-
-	return
+	return a1, a2, a3, a4
 }
 
-// Must5 args的最后一个是非空错误时panic，返回5个结果
-func Must5[T1, T2, T3, T4, T5 any](args ...any) (r1 T1, r2 T2, r3 T3, r4 T4, r5 T5) {
-	l := len(args)
-	mustCheckArgs(6, args...)
+// Must5 err是非空错误时panic，返回5个结果
+func Must5[T1, T2, T3, T4, T5 any](a1 T1, a2 T2, a3 T3, a4 T4, a5 T5, err error) (T1, T2, T3, T4, T5) {
+	mustCheckError(err)
 
-	r5 = args[l-2].(T5)
-	r4 = args[l-3].(T4)
-	r3 = args[l-4].(T3)
-	r2 = args[l-5].(T2)
-	r1 = args[l-6].(T1)
-
-	return
+	return a1, a2, a3, a4, a5
 }
+
+func mustCheckError(err error) {
+	if err != nil {
+		panic(NewError(efrom(err)))
+	}
+}
+
+var _ = mustCheckArgs
 
 func mustCheckArgs(wantLength int, args ...any) {
 	if wantLength <= 0 {
