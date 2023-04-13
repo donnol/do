@@ -4,8 +4,8 @@ package do
 func KeyValueBy[K comparable, E, V any](collection []E, iteratee func(item E) (K, V)) map[K]V {
 	result := make(map[K]V, len(collection))
 
-	for _, v := range collection {
-		k, r := iteratee(v)
+	for i := range collection {
+		k, r := iteratee(collection[i])
 		result[k] = r
 	}
 
@@ -17,4 +17,28 @@ func KeyBy[K comparable, E any](collection []E, iteratee func(item E) K) map[K]E
 	return KeyValueBy(collection, func(item E) (K, E) {
 		return iteratee(item), item
 	})
+}
+
+func Keys[K comparable, E any](collection map[K]E) []K {
+	result := make([]K, len(collection))
+
+	var i int
+	for k := range collection {
+		result[i] = k
+		i++
+	}
+
+	return result
+}
+
+func Values[K comparable, E any](collection map[K]E) []E {
+	result := make([]E, len(collection))
+
+	var i int
+	for _, v := range collection {
+		result[i] = v
+		i++
+	}
+
+	return result
 }
