@@ -2,7 +2,9 @@ package do
 
 import (
 	"database/sql"
+	"path/filepath"
 
+	"github.com/donnol/do"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -20,20 +22,13 @@ const (
 
 var (
 	tdb = func() *sql.DB {
-		gdb, err := gorm.Open(sqlite.Open("../testdata/test.db"))
-		if err != nil {
-			panic(err)
-		}
+		dir := "../testdata"
+		do.Must(do.MkdirAllIfNotExist(dir))
+		gdb := do.Must1(gorm.Open(sqlite.Open(filepath.Join(dir, "test.db"))))
 
-		sqldb, err := gdb.DB()
-		if err != nil {
-			panic(err)
-		}
+		sqldb := do.Must1(gdb.DB())
 
-		_, err = sqldb.Exec(createSQL)
-		if err != nil {
-			panic(err)
-		}
+		do.Must1(sqldb.Exec(createSQL))
 
 		return sqldb
 	}()

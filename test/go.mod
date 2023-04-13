@@ -3,7 +3,7 @@ module github.com/donnol/do/test
 go 1.18
 
 require (
-	github.com/donnol/do v0.3.0
+	github.com/donnol/do v0.7.1
 	gorm.io/driver/sqlite v1.4.4
 	gorm.io/gorm v1.24.0
 )
