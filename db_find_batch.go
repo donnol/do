@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// Batch 批量处理查询到的数据
+// Batch process data find from Storer in batches
 func Batch[S Storer, F Finder[R], R any](db S, finder F, batchNum int, handler func([]R) error) (err error) {
 	query, args := finder.Query()
 	rows, err := db.QueryContext(context.TODO(), query, args...)
@@ -49,7 +49,7 @@ func Batch[S Storer, F Finder[R], R any](db S, finder F, batchNum int, handler f
 	return
 }
 
-// BatchConcurrent 并发批量处理查询到的数据
+// BatchConcurrent batch process data concurrently
 func BatchConcurrent[S Storer, F Finder[R], R any](db S, finder F, batchNum int, handler func([]R) error, concNum int) (err error) {
 	query, args := finder.Query()
 	rows, err := db.QueryContext(context.TODO(), query, args...)

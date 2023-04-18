@@ -12,7 +12,7 @@ var (
 
 type Doer = func(context.Context) (canRetry bool, err error)
 
-// RetryWithTimes 如果执行f失败了，重试tryTimes次
+// RetryWithTimes retry f tryTimes times if f failed
 func RetryWithTimes(ctx context.Context, tryTimes int, f Doer) error {
 	if f == nil {
 		return ErrNilDoer
@@ -38,7 +38,7 @@ func RetryWithTimes(ctx context.Context, tryTimes int, f Doer) error {
 	return err
 }
 
-// RetryWithDeadline 如果执行f失败了，在t时间之前重试
+// RetryWithDeadline retry f before d exceeds if f failed
 func RetryWithDeadline(ctx context.Context, d time.Time, f Doer) error {
 	if f == nil {
 		return ErrNilDoer

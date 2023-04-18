@@ -2,40 +2,40 @@ package do
 
 import "fmt"
 
-// Must err是非空错误时panic，无结果返回
+// Must panic if err is not nill
 func Must(err error) {
 	mustCheckError(err)
 }
 
-// Must1 err是非空错误时panic，返回1个结果
+// Must1 panic if err is not nill，or return 1 result
 func Must1[T any](a1 T, err error) T {
 	mustCheckError(err)
 
 	return a1
 }
 
-// Must2 err是非空错误时panic，返回2个结果
+// Must2 panic if err is not nill，or return 2 result
 func Must2[T1, T2 any](a1 T1, a2 T2, err error) (T1, T2) {
 	mustCheckError(err)
 
 	return a1, a2
 }
 
-// Must3 err是非空错误时panic，返回3个结果
+// Must3 panic if err is not nill，or return 3 result
 func Must3[T1, T2, T3 any](a1 T1, a2 T2, a3 T3, err error) (T1, T2, T3) {
 	mustCheckError(err)
 
 	return a1, a2, a3
 }
 
-// Must4 err是非空错误时panic，返回4个结果
+// Must4 panic if err is not nill，or return 4 result
 func Must4[T1, T2, T3, T4 any](a1 T1, a2 T2, a3 T3, a4 T4, err error) (T1, T2, T3, T4) {
 	mustCheckError(err)
 
 	return a1, a2, a3, a4
 }
 
-// Must5 err是非空错误时panic，返回5个结果
+// Must5 panic if err is not nill，or return 5 result
 func Must5[T1, T2, T3, T4, T5 any](a1 T1, a2 T2, a3 T3, a4 T4, a5 T5, err error) (T1, T2, T3, T4, T5) {
 	mustCheckError(err)
 

@@ -19,7 +19,7 @@ type singleFlight struct {
 
 type SingleFlightCall[R any] func() (R, error)
 
-// SingleFlight 多次调用时，通过key判断是否已有请求在进行，若有则等待该请求完成；若无则执行
+// SingleFlight make sure only one request is doing with one key
 func SingleFlight[R any](key string, fn SingleFlightCall[R]) (r R, err error) {
 	wg := initWg(key)
 

@@ -1,5 +1,6 @@
 package do
 
+// NestedJoin like nested loop join
 func NestedJoin[J, K, R any](
 	left []J,
 	right []K,
@@ -20,6 +21,7 @@ func NestedJoin[J, K, R any](
 	return r
 }
 
+// HashJoin like hash join
 func HashJoin[K comparable, LE, RE, R any](
 	left []LE,
 	right []RE,

@@ -19,31 +19,21 @@ const (
 
 var logger = log.New(os.Stdout, "[Worker]", log.LstdFlags|log.Lshortfile)
 
-// 错误
 var (
 	ErrWorkerIsStop = errors.New("Worker is stop")
 	ErrNilJobDo     = errors.New("Job do field is nil")
 )
 
-// DefaultWorker 默认Wroker
-var DefaultWorker = NewWorker(defaultCount)
-
-func init() {
-	DefaultWorker.Start()
-}
-
-// Job 工作
 type Job struct {
 	doctx DoWithCtx
 
-	timeout time.Duration // 超时时间
+	timeout time.Duration
 
-	errorHandler ErrorHandler // 错误处理方法
+	errorHandler ErrorHandler
 }
 
 type DoWithCtx func(ctx context.Context) error
 
-// ErrorHandler 错误处理方法
 type ErrorHandler func(error)
 
 func NewJob(do DoWithCtx, timeout time.Duration, eh ErrorHandler) *Job {
@@ -70,16 +60,15 @@ func (job *Job) run(ctx context.Context) error {
 	return nil
 }
 
-// Worker 工人
 type Worker struct {
-	// 所有管道都要有make, read, write, close操作
-	limitChan chan struct{}             // 并发控制管道
-	stopChan  chan struct{}             // 停止管道
-	jobChan   *chanx.UnboundedChan[Job] // 工作管道
-	errChan   chan error                // 错误管道
+	// all chan must have make, read, write, close operate
+	limitChan chan struct{} // control the goroutine number
+	stopChan  chan struct{}
+	jobChan   *chanx.UnboundedChan[Job]
+	errChan   chan error
 
 	wg   *sync.WaitGroup
-	stop bool // 是否调用了Stop方法
+	stop bool
 }
 
 // NewWorker new a worker with limit number
@@ -96,7 +85,6 @@ func NewWorker(n int) *Worker {
 	}
 }
 
-// Start 开始
 func (w *Worker) Start() {
 	go w.handleError()
 	go w.start()
@@ -157,7 +145,6 @@ func (w *Worker) handleError() {
 	}
 }
 
-// Stop 停止
 func (w *Worker) Stop() {
 	w.stop = true
 
@@ -183,11 +170,9 @@ func (w *Worker) close() {
 }
 
 func (w *Worker) wait() {
-	// 等待所有工作完成
 	w.wg.Wait()
 }
 
-// Push 添加
 func (w *Worker) Push(job Job) error {
 	if w.stop {
 		return ErrWorkerIsStop

@@ -8,11 +8,11 @@ import (
 )
 
 type Finder[R any] interface {
-	Query() (query string, args []any) // 返回查询语句，参数
+	// return query sql and args
+	Query() (query string, args []any)
 
-	// 新建结果类型对象，不要使用同一个，用来接收结果
-	// r需要是指针类型
-	// fields需要是字段指针类型，需要与表的列保持一一对应
+	// new a result type object, not the same, to receive every row
+	// fields must be pointer type of result object's field, and it is match with query sql's select column one by one
 	NewScanObjAndFields(colTypes []*sql.ColumnType) (r *R, fields []any)
 }
 
@@ -61,8 +61,6 @@ func FindFirst[S Storer, F Finder[R], R any](db S, finder F, res *R) (err error)
 	return
 }
 
-// FindAll
-// sql里select的字段数量必须与R的ScanFields方法返回的数组元素数量一致
 func FindAll[S Storer, F Finder[R], R any](db S, finder F, initial R) (r []R, err error) {
 	query, args := finder.Query()
 	rows, err := db.QueryContext(context.TODO(), query, args...) // sql里select了n列
