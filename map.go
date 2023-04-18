@@ -1,6 +1,8 @@
 package do
 
-import "sync"
+import (
+	"sync"
+)
 
 type Map[K comparable, T any] struct {
 	mu sync.Mutex
@@ -48,4 +50,9 @@ func (m *Map[K, T]) Remove(key K) {
 	m.mu.Lock()
 	delete(m.m, key)
 	m.mu.Unlock()
+}
+
+// ValueAs get value by key from *Map[K, any], and assert value type to T
+func ValueAs[K comparable, T any](m *Map[K, any], key K) T {
+	return As[T](m.Get(key))
 }
