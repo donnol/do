@@ -3,15 +3,11 @@ package parser
 import (
 	"bytes"
 	"go/ast"
-	"go/importer"
-	"go/parser"
 	"go/printer"
 	"go/token"
-	"go/types"
 	"io"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"golang.org/x/tools/go/ast/astutil"
@@ -67,7 +63,7 @@ func (p *Parser) ParseByGoPackages(patterns ...string) (result Packages, err err
 			packages.NeedCompiledGoFiles |
 			packages.NeedImports |
 			packages.NeedDeps |
-			packages.NeedExportsFile |
+			packages.NeedExportFile |
 			packages.NeedTypes |
 			packages.NeedSyntax |
 			packages.NeedTypesInfo |
@@ -107,91 +103,6 @@ func (p *Parser) GetStandardPackages() []string {
 	}
 
 	return standardPackages
-}
-
-func (p *Parser) parseDir(fset *token.FileSet, fullDir string) (pkgs map[string]*ast.Package, err error) {
-	const (
-		testSuffix = "_test"
-	)
-
-	// 解析目录
-	pkgs, err = parser.ParseDir(fset, fullDir, func(fi os.FileInfo) bool {
-		li := strings.LastIndex(fi.Name(), filepath.Ext(fi.Name()))
-
-		// 跳过test文件
-		testi := strings.LastIndex(fi.Name(), testSuffix)
-		if testi != -1 && li-testi == len(testSuffix) {
-			return false
-		}
-
-		return true
-	}, parser.ParseComments)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func (p *Parser) typesCheck(path string, files []*ast.File) (info *types.Info, err error) {
-	imp := importer.Default()
-	if p.useSourceImporter {
-		fset := token.NewFileSet()
-		imp = importer.ForCompiler(fset, "source", nil)
-	}
-
-	// 获取类型信息
-	conf := types.Config{
-		IgnoreFuncBodies: true,
-
-		// 默认是用go install安装后生成的.a文件，可以选择使用source，但是会慢很多
-		Importer: imp,
-
-		Error: func(err error) {
-			log.Printf("Check Failed: %+v\n", err)
-		},
-		DisableUnusedImportCheck: true,
-	}
-	info = &types.Info{
-		Types:      make(map[ast.Expr]types.TypeAndValue),
-		Defs:       make(map[*ast.Ident]types.Object),
-		Uses:       make(map[*ast.Ident]types.Object),
-		Implicits:  make(map[ast.Node]types.Object),
-		Selections: make(map[*ast.SelectorExpr]*types.Selection),
-		Scopes:     make(map[ast.Node]*types.Scope),
-	}
-	// conf.Check的path参数传入的是包名，而不是导入路径
-	pkg, err := conf.Check(path, p.fset, files, info)
-	if err != nil {
-		return
-	}
-	p.methodSet(pkg)
-
-	return
-}
-
-// 根据types.Type找到method set，但是怎么将它转为interface呢？
-func (p *Parser) methodSet(pkg *types.Package) {
-	if pkg.Scope() == nil {
-		return
-	}
-	for _, name := range pkg.Scope().Names() {
-		obj := pkg.Scope().Lookup(name)
-		if obj == nil {
-			continue
-		}
-		typ := obj.Type()
-		for _, t := range []types.Type{typ, types.NewPointer(typ)} {
-			// fmt.Printf("Method set of %s:\n", t)
-			mset := types.NewMethodSet(t)
-			for i := 0; i < mset.Len(); i++ {
-				sel := mset.At(i)
-				_ = sel
-				// fmt.Println("sel: ", sel, "type:", sel.Type(), reflect.TypeOf(sel.Type().Underlying()), "obj:", sel.Obj())
-			}
-			// fmt.Println()
-		}
-	}
 }
 
 func (p *Parser) replaceFileImportPath(fileName string, file *ast.File) error {

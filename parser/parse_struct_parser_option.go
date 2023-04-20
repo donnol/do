@@ -5,7 +5,6 @@ import (
 	"os"
 )
 
-// Option 选项
 type Option struct {
 	Op Op // 操作，如生成接口，生成实现等
 

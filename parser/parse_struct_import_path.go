@@ -59,7 +59,7 @@ func getModFilePath(dir string) (modDir, modPath string, err error) {
 		break
 	}
 	if modfilePath == "" {
-		return "", "", fmt.Errorf("Can't find go mod file")
+		return "", "", fmt.Errorf("can't find go mod file")
 	}
 	modDir = modfileDir
 	modPath = modfilePath
@@ -67,7 +67,7 @@ func getModFilePath(dir string) (modDir, modPath string, err error) {
 	return
 }
 
-// GetCurrentDirPath 获取当前目录的包导入路径
+// GetCurrentDirPath get import path in current directory
 func (p *ImportPath) GetByCurrentDir() (path string, err error) {
 	return getPkgPathFromDir()
 }
@@ -113,7 +113,7 @@ type Module struct {
 	RelDir string
 }
 
-// FindAllModule 寻找目录下的所有module
+// FindAllModule find all module in dir
 func (p *ImportPath) FindAllModule(dir string) (mods []Module, err error) {
 	if err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {

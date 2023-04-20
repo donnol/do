@@ -9,14 +9,12 @@ import (
 	"github.com/donnol/do/parser"
 )
 
-// Field 字段
 type Field struct {
 	reflect.StructField        // 内嵌反射结构体字段类型
 	Comment             string // 注释
 	Struct              Struct // 字段的类型是其它结构体
 }
 
-// Struct 结构体
 type Struct struct {
 	Name        string       // 名字
 	Comment     string       // 注释
@@ -25,14 +23,12 @@ type Struct struct {
 	Fields      []Field      // 结构体字段
 }
 
-// MakeStruct 新建结构体
 func MakeStruct() Struct {
 	return Struct{
 		Fields: make([]Field, 0),
 	}
 }
 
-// ResolveStruct 解析结构体
 func ResolveStruct(value any) (Struct, error) {
 	s := MakeStruct()
 
@@ -67,7 +63,7 @@ func ResolveStruct(value any) (Struct, error) {
 	return s, nil
 }
 
-// GetFields 返回结构体的所有field，包括匿名字段的field
+// GetFields return all field in struct, include anonymous fields
 func (s Struct) GetFields() []Field {
 	return getFields(s)
 }
@@ -89,7 +85,7 @@ func uniqKey(rt reflect.Type) string {
 	return rt.PkgPath() + "|" + rt.Name()
 }
 
-// collectStructComment 收集结构体的注释
+// collectStructComment collect struct comment
 func collectStructComment(refType reflect.Type, s *Struct) error {
 	// 解析-获取结构体注释
 	var r map[string]string
