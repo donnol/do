@@ -2,9 +2,12 @@ package do
 
 import "fmt"
 
-type Error[T any] struct {
-	inner T
-}
+type (
+	// Error is a error type with any element
+	Error[T any] struct {
+		inner T // inner element
+	}
+)
 
 func NewError[T any](inner T) error {
 	return &Error[T]{
