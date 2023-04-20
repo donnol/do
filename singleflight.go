@@ -52,6 +52,7 @@ func SingleFlight[R any](key string, fn SingleFlightCall[R]) (r R, err error) {
 
 func ForgotKey(key string) {
 	singleFlightMap.Remove(key)
+	removeWg(key)
 }
 
 func initWg(key string) *sync.WaitGroup {
