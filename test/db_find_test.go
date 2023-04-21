@@ -28,10 +28,16 @@ func (f *finderOfUser) Query() (query string, args []any) {
 
 func (f *finderOfUser) NewScanObjAndFields(colTypes []*sql.ColumnType) (r *UserForDB, fields []any) {
 	r = &UserForDB{}
-	fields = append(fields,
-		&r.Id,
-		&r.Name,
-	)
+
+	// fields如果数量很多，写起来也很麻烦
+	// 怎么根据column type得到fields呢？
+	// fields = append(fields,
+	// 	&r.Id,
+	// 	&r.Name,
+	// )
+
+	fields = do.FieldsByColumnType(r, colTypes, nil)
+
 	return
 }
 
