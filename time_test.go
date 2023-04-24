@@ -57,3 +57,36 @@ func TestIsExpired(t *testing.T) {
 		})
 	}
 }
+
+func TestTodayZero(t *testing.T) {
+	today := TodayZero()
+	if today.Hour() != 0 {
+		t.Errorf("bad day first hour is %v", today.Hour())
+	}
+	if today.Minute() != 0 {
+		t.Errorf("bad day first minute is %v", today.Minute())
+	}
+	if today.Second() != 0 {
+		t.Errorf("bad day first second is %v", today.Second())
+	}
+	thisMonthFirst := ThisMonthFirst()
+	if thisMonthFirst.Day() != 1 {
+		t.Errorf("bad month first day is %v", thisMonthFirst.Day())
+	}
+	if today.Month() != thisMonthFirst.Month() {
+		t.Errorf("bad month: %v != %v", today.Month(), thisMonthFirst.Month())
+	}
+	thisYearFirst := ThisYearFirst()
+	if thisYearFirst.Month() != 1 {
+		t.Errorf("bad year first month is %v", thisYearFirst.Month())
+	}
+	if thisYearFirst.Day() != 1 {
+		t.Errorf("bad year first day is %v", thisYearFirst.Day())
+	}
+	if thisYearFirst.Year() != today.Year() {
+		t.Errorf("bad year: %v != %v", thisYearFirst.Year(), today.Year())
+	}
+	if thisYearFirst.Year() != thisMonthFirst.Year() {
+		t.Errorf("bad year: %v != %v", thisYearFirst.Year(), thisMonthFirst.Year())
+	}
+}
