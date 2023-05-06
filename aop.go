@@ -91,7 +91,9 @@ type Tracer interface {
 type tracers []Tracer
 
 var (
-	gtracers tracers
+	gtracers = tracers{
+		&TimeTracer{},
+	}
 )
 
 func RegisterProxyTracer(tracers ...Tracer) {
