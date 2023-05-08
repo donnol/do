@@ -91,3 +91,48 @@ func BenchmarkValues(b *testing.B) {
 		})
 	}
 }
+
+func TestMergeKeyValue(t *testing.T) {
+	type args[K comparable, V any] struct {
+		m1 map[K]V
+		m2 map[K]V
+	}
+	tests := []struct {
+		name string
+		args args[string, int]
+		want map[string]int
+	}{
+		// TODO: Add test cases.
+		{
+			name: "string-int",
+			args: args[string, int]{
+				m1: map[string]int{
+					"a1": 1,
+					"a2": 2,
+					"a3": 3,
+				},
+				m2: map[string]int{
+					"a1": 11,
+					"a4": 4,
+					"a5": 5,
+					"a6": 6,
+				},
+			},
+			want: map[string]int{
+				"a1": 11,
+				"a2": 2,
+				"a3": 3,
+				"a4": 4,
+				"a5": 5,
+				"a6": 6,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := MergeKeyValue(tt.args.m1, tt.args.m2); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MergeKeyValue() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

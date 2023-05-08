@@ -1,36 +1,74 @@
 package do
 
 import (
-	"database/sql"
 	"reflect"
 	"testing"
 )
 
-func TestFieldsByColumnType(t *testing.T) {
+type UserEmbed struct {
+	User
+	Phone string
+}
+
+func Test_fieldsByColumnName(t *testing.T) {
 	type args struct {
 		t           any
-		colTypes    []*sql.ColumnType
+		validName   map[string]struct{}
 		fieldMapper func(string) string
 	}
+
+	u := &User{}
+	id := &u.Id
+	name := &u.Name
+
+	ue := &UserEmbed{}
+	ueid := &ue.Id
+	uename := &ue.Name
+	uephone := &ue.Phone
+
 	tests := []struct {
-		name       string
-		args       args
-		wantFields []any
+		name           string
+		args           args
+		wantNameValues map[string]any
 	}{
 		// TODO: Add test cases.
 		{
-			name: "1",
+			name: "user",
 			args: args{
-				t:           &User{},
-				colTypes:    []*sql.ColumnType{},
+				t: u,
+				validName: map[string]struct{}{
+					"id":   {},
+					"name": {},
+				},
 				fieldMapper: nil,
+			},
+			wantNameValues: map[string]any{
+				"id":   id,
+				"name": name,
+			},
+		},
+		{
+			name: "user embed",
+			args: args{
+				t: ue,
+				validName: map[string]struct{}{
+					"id":    {},
+					"name":  {},
+					"phone": {},
+				},
+				fieldMapper: nil,
+			},
+			wantNameValues: map[string]any{
+				"id":    ueid,
+				"name":  uename,
+				"phone": uephone,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotFields := FieldsByColumnType(tt.args.t, tt.args.colTypes, tt.args.fieldMapper); !reflect.DeepEqual(gotFields, tt.wantFields) {
-				t.Errorf("FieldsByColumnType() = %v, want %v", gotFields, tt.wantFields)
+			if gotNameValues := fieldsByColumnName(tt.args.t, tt.args.validName, tt.args.fieldMapper); !reflect.DeepEqual(gotNameValues, tt.wantNameValues) {
+				t.Errorf("fieldsByColumnName() = %v, want %v", gotNameValues, tt.wantNameValues)
 			}
 		})
 	}

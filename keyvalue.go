@@ -42,3 +42,11 @@ func Values[K comparable, E any](collection map[K]E) []E {
 
 	return result
 }
+
+// MergeKeyValue merge m2 into m1, will override m1 key value if both exists
+func MergeKeyValue[K comparable, V any](m1, m2 map[K]V) map[K]V {
+	for k, v := range m2 {
+		m1[k] = v
+	}
+	return m1
+}
