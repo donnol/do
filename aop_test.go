@@ -32,6 +32,8 @@ func (impl *tracerImpl) Stop() {
 }
 
 func TestProxyTracer(t *testing.T) {
+	gtracers = make(tracers, 0)
+
 	buf := new(bytes.Buffer)
 	log.SetOutput(buf)
 

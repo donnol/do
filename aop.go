@@ -82,6 +82,19 @@ func pctxUniqWithTypeParams(uniq string, typeParams ...string) string {
 	return uniq
 }
 
+var (
+	globalProxyCtxMap = NewProxyCtxMap()
+)
+
+// RegisterProxyMethod 注册代理方法，根据包名+接口名+方法名唯一对应一个方法；在有了泛型后还要加上类型参数，唯一键变为包名+接口名+方法名+TP1,TP2,...
+func RegisterProxyMethod(pctx ProxyContext, cf ProxyCtxFunc, typeParams ...string) {
+	globalProxyCtxMap.Set(pctx, cf, typeParams...)
+}
+
+func GlobalProxyCtxMap() *ProxyCtxFuncStore {
+	return globalProxyCtxMap
+}
+
 type Tracer interface {
 	New(ProxyContext) Tracer // 新建Tracer，每个方法调用均新建一个
 	Begin()
