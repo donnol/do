@@ -2,6 +2,7 @@ package do
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"strings"
 	"testing"
@@ -19,7 +20,8 @@ var i int
 func (impl *tracerImpl) New(pctx ProxyContext) Tracer {
 	i++
 	return &tracerImpl{
-		no: i,
+		pctx: pctx,
+		no:   i,
 	}
 }
 
@@ -28,7 +30,7 @@ func (impl *tracerImpl) Begin() {
 }
 
 func (impl *tracerImpl) Stop() {
-	log.Printf("[%s] NO.%d: used time %v\n", impl.pctx, impl.no, time.Since(impl.begin))
+	log.Output(3, fmt.Sprintf("[%s] NO.%d: used time %v\n", impl.pctx, impl.no, time.Since(impl.begin)))
 }
 
 func TestProxyTracer(t *testing.T) {
@@ -36,14 +38,15 @@ func TestProxyTracer(t *testing.T) {
 
 	buf := new(bytes.Buffer)
 	log.SetOutput(buf)
+	log.SetFlags(log.Llongfile | log.LstdFlags)
 
 	RegisterProxyTracer(&tracerImpl{})
 	RegisterProxyTracer(&tracerImpl{})
 
 	tpctx := ProxyContext{
-		PkgPath:       "test",
-		InterfaceName: "test",
-		MethodName:    "test",
+		PkgPath:       "testpkg",
+		InterfaceName: "testinter",
+		MethodName:    "testmethod",
 	}
 	func() {
 		stop := ProxyTraceBegin(tpctx)

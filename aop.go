@@ -146,5 +146,5 @@ func (impl *TimeTracer) Begin() {
 }
 
 func (impl *TimeTracer) Stop() {
-	log.Printf("[%s] used time %v\n", impl.pctx, time.Since(impl.begin))
+	log.Output(3, fmt.Sprintf("[%s] used time %v\n", impl.pctx, time.Since(impl.begin)))
 }
