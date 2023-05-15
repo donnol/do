@@ -181,3 +181,56 @@ func TestFindFirst(t *testing.T) {
 		t.Errorf("bad result, total %v != %v", total, 1)
 	}
 }
+
+func TestFindListByFunc(t *testing.T) {
+	var r []UserForDB
+	err := do.FindListByFunc(tdb, findUserById(1), &r)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(r) != 1 {
+		t.Errorf("bad result len, len(r) %v != %v", len(r), 1)
+	}
+	for _, r := range r {
+		if r.Id != 1 {
+			t.Errorf("bad case of id, %v != %v", r.Id, 1)
+		}
+		if r.Name != "jd" {
+			t.Errorf("bad case of name, %v != %v", r.Name, "jd")
+		}
+	}
+
+	// FindFunc实现了Finder接口
+	{
+		var r []UserForDB
+		err := do.FindList(tdb, findUserById(1), &r)
+		if err != nil {
+			t.Error(err)
+		}
+		if len(r) != 1 {
+			t.Errorf("bad result len, len(r) %v != %v", len(r), 1)
+		}
+		for _, r := range r {
+			if r.Id != 1 {
+				t.Errorf("bad case of id, %v != %v", r.Id, 1)
+			}
+			if r.Name != "jd" {
+				t.Errorf("bad case of name, %v != %v", r.Name, "jd")
+			}
+		}
+	}
+}
+
+func findUserById(id uint64) do.FindFunc[UserForDB] {
+	return func() (query string, args []any, genObj func(colTypes []*sql.ColumnType) (r *UserForDB, fields []any)) {
+		query = `select * from user where id = ?`
+		args = append(args, id)
+
+		genObj = func(colTypes []*sql.ColumnType) (r *UserForDB, fields []any) {
+			r = &UserForDB{}
+			fields = do.FieldsByColumnType(r, colTypes, nil)
+			return
+		}
+		return
+	}
+}
