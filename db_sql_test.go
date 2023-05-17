@@ -100,6 +100,16 @@ func TestSQLProcess(t *testing.T) {
 			if !reflect.DeepEqual(gotArgs, tt.wantArgs) {
 				t.Errorf("SQLProcess() gotArgs = %v, want %v", gotArgs, tt.wantArgs)
 			}
+
+			{
+				gotQuery, gotArgs := SQLProcessRaw(tt.args.funcs...)
+				if gotQuery != tt.wantQuery.Raw() {
+					t.Errorf("SQLProcess() gotQuery = %v, want %v", gotQuery, tt.wantQuery)
+				}
+				if !reflect.DeepEqual(gotArgs, tt.wantArgs.Raw()) {
+					t.Errorf("SQLProcess() gotArgs = %v, want %v", gotArgs, tt.wantArgs)
+				}
+			}
 		})
 	}
 }

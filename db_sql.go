@@ -63,3 +63,10 @@ func SQLProcess(funcs ...SQLQueryFunc) (query SQLQuery, args SQLArgs) {
 	args = args.Append(as)
 	return
 }
+
+func SQLProcessRaw(funcs ...SQLQueryFunc) (query string, args []any) {
+	q, a := SQLProcess(funcs...)
+	query = q.Raw()
+	args = a.Raw()
+	return
+}
