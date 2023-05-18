@@ -1,6 +1,7 @@
 package do
 
 import (
+	"reflect"
 	"testing"
 	"time"
 )
@@ -88,5 +89,76 @@ func TestTodayZero(t *testing.T) {
 	}
 	if thisYearFirst.Year() != thisMonthFirst.Year() {
 		t.Errorf("bad year: %v != %v", thisYearFirst.Year(), thisMonthFirst.Year())
+	}
+}
+
+func TestParseTime(t *testing.T) {
+	type args struct {
+		t       string
+		layouts []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantR   time.Time
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+		{
+			name: "empty layout",
+			args: args{
+				t:       "2011-02-04 23:33:10",
+				layouts: []string{},
+			},
+			wantR:   time.Date(2011, 02, 04, 23, 33, 10, 0, time.Local),
+			wantErr: false,
+		},
+		{
+			name: "one layout",
+			args: args{
+				t: "2011-02-04T23:33:10Z",
+				layouts: []string{
+					"2006-01-02T15:04:05Z",
+				},
+			},
+			wantR:   time.Date(2011, 02, 04, 23, 33, 10, 0, time.Local),
+			wantErr: false,
+		},
+		{
+			name: "many layout",
+			args: args{
+				t: "2011-02-04T23:33:10Z",
+				layouts: []string{
+					"2006-01-02 15:04:05 ",
+					"2006-01-02T15:04:05Z",
+				},
+			},
+			wantR:   time.Date(2011, 02, 04, 23, 33, 10, 0, time.Local),
+			wantErr: false,
+		},
+		{
+			name: "many layout but failed",
+			args: args{
+				t: "2011-02-04T23:33:10Z",
+				layouts: []string{
+					"2006-01-02 15:04:05 ",
+					"2006-01-02",
+				},
+			},
+			wantR:   time.Time{},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotR, err := ParseTime(tt.args.t, tt.args.layouts...)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseTime() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("ParseTime() = %v, want %v", gotR, tt.wantR)
+			}
+		})
 	}
 }
