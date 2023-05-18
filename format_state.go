@@ -1,9 +1,14 @@
 package do
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode/utf8"
+)
+
+var (
+	_ = fmt.Printf
 )
 
 // ===== Code copied from github.com/golang/tools/go/analysis/passes/printf/printf.go
@@ -32,6 +37,7 @@ func checkPrintf(format string) (ok bool, argNum int) {
 	if !strings.Contains(format, "%") {
 		return
 	}
+	// fmt.Printf("= format: %s\n", format)
 	// Hard part: check formats against args.
 	argNum = firstArg
 	maxArgNum := firstArg
@@ -45,9 +51,10 @@ func checkPrintf(format string) (ok bool, argNum int) {
 		if state == nil {
 			return
 		}
+		// fmt.Printf("=== verb: %s\n", string(state.verb))
 		w = len(state.format)
 		if !okPrintfArg(state) { // One error per format is enough.
-			return
+			continue // change from return to continue to get left verb
 		}
 		if state.hasIndex {
 			anyIndex = true
@@ -63,11 +70,7 @@ func checkPrintf(format string) (ok bool, argNum int) {
 			}
 		}
 	}
-	// Dotdotdot is hard.
-	// if call.Ellipsis.IsValid() && maxArgNum >= len(call.Args)-1 {
-	// 	return
-	// }
-	// If any formats are indexed, extra arguments are ignored.
+
 	if anyIndex {
 		return
 	}
@@ -285,17 +288,13 @@ func okPrintfArg(state *formatState) (ok bool) {
 
 	if !formatter {
 		if !found {
-			// pass.ReportRangef(call, "%s format %s has unknown verb %c", state.name, state.format, state.verb)
 			return false
 		}
 		for _, flag := range state.flags {
-			// TODO: Disable complaint about '0' for Go 1.10. To be fixed properly in 1.11.
-			// See issues 23598 and 23605.
 			if flag == '0' {
 				continue
 			}
 			if !strings.ContainsRune(v.flags, rune(flag)) {
-				// pass.ReportRangef(call, "%s format %s has unrecognized flag %c", state.name, state.format, flag)
 				return false
 			}
 		}

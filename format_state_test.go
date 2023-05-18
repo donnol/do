@@ -96,6 +96,14 @@ func Test_checkPrintf(t *testing.T) {
 			wantOk:     true,
 			wantArgNum: 4,
 		},
+		{
+			name: "mysql-date-format",
+			args: args{
+				format: "I am %Y%m%%d",
+			},
+			wantOk:     true,
+			wantArgNum: 0,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
