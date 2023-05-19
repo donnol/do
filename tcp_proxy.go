@@ -2,6 +2,7 @@ package do
 
 import (
 	"io"
+	"log"
 	"net"
 )
 
@@ -30,7 +31,6 @@ func TCPProxy(localAddr, remoteAddr string, handlers ...func(lconn, rconn net.Co
 	if err != nil {
 		return
 	}
-	defer rconn.Close()
 
 	for {
 		var lconn net.Conn
@@ -38,7 +38,6 @@ func TCPProxy(localAddr, remoteAddr string, handlers ...func(lconn, rconn net.Co
 		if err != nil {
 			return
 		}
-		defer lconn.Close()
 
 		if len(handlers) == 0 {
 			TCPProxyDefaultHandler(lconn, rconn)
@@ -49,8 +48,29 @@ func TCPProxy(localAddr, remoteAddr string, handlers ...func(lconn, rconn net.Co
 }
 
 func TCPProxyDefaultHandler(lconn, rconn net.Conn) {
-	go io.Copy(lconn, rconn)
-	go io.Copy(rconn, lconn)
+	// 读写完就退出了？那后面的数据怎么办？
+	go func() {
+		n, err := io.Copy(lconn, rconn)
+		if err == io.EOF {
+			return
+		}
+		if err != nil {
+			log.Printf("copy from remote to local failed: %v\n", err)
+			return
+		}
+		log.Printf("copy %d bytes from remote to local\n", n)
+	}()
+	go func() {
+		n, err := io.Copy(rconn, lconn)
+		if err == io.EOF {
+			return
+		}
+		if err != nil {
+			log.Printf("copy from local to remote failed: %v\n", err)
+			return
+		}
+		log.Printf("copy %d bytes from local to remote\n", n)
+	}()
 }
 
 // TCPSend send to remote addr with handler
