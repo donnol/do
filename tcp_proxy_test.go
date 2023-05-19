@@ -51,6 +51,57 @@ func TestTCPProxy(t *testing.T) {
 	}
 }
 
+func TestTCPProxySpecifyHandler(t *testing.T) {
+	type args struct {
+		localAddr  string
+		remoteAddr string
+		handler    func(lconn net.Conn, rconn net.Conn)
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+		{
+			name: "1",
+			args: args{
+				localAddr:  ":32388",
+				remoteAddr: ":32399",
+				handler: func(lconn, rconn net.Conn) {
+					// log.Printf("custom handler begin\n")
+					var i int
+
+					TCPProxyDefaultHandler(lconn, rconn)
+
+					i++
+					// log.Printf("custom handler end\n")
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// start remote server
+			go startRemoteServer(tt.args.remoteAddr)
+			time.Sleep(time.Millisecond * 100)
+
+			go func() {
+				if err := TCPProxy(tt.args.localAddr, tt.args.remoteAddr, tt.args.handler); (err != nil) != tt.wantErr {
+					t.Errorf("TCPProxy() error = %v, wantErr %v", err, tt.wantErr)
+				}
+			}()
+			time.Sleep(time.Millisecond * 100)
+
+			// access local addr, and it will transfer data to remote
+			if err := localClient(tt.args.localAddr); err != nil {
+				t.Errorf("send request to local addr failed: %v", err)
+			}
+		})
+	}
+}
+
 // NOTE: just test the connection in proxy, so just use simple data for read and write which doesn't handle the longer data than 1024.
 
 var (

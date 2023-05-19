@@ -9,8 +9,8 @@ const (
 	network = "tcp"
 )
 
-// TCPProxy listen localAddr and transfer any request to remoteAddr
-func TCPProxy(localAddr, remoteAddr string) (err error) {
+// TCPProxy listen localAddr and transfer any request to remoteAddr.We can use handlers to specify one custom func to transfer data.
+func TCPProxy(localAddr, remoteAddr string, handlers ...func(lconn, rconn net.Conn)) (err error) {
 	laddr, err := net.ResolveTCPAddr(network, localAddr)
 	if err != nil {
 		return
@@ -38,10 +38,19 @@ func TCPProxy(localAddr, remoteAddr string) (err error) {
 		if err != nil {
 			return
 		}
+		defer lconn.Close()
 
-		go io.Copy(lconn, rconn)
-		go io.Copy(rconn, lconn)
+		if len(handlers) == 0 {
+			TCPProxyDefaultHandler(lconn, rconn)
+		} else {
+			go handlers[0](lconn, rconn)
+		}
 	}
+}
+
+func TCPProxyDefaultHandler(lconn, rconn net.Conn) {
+	go io.Copy(lconn, rconn)
+	go io.Copy(rconn, lconn)
 }
 
 // TCPSend send to remote addr with handler
