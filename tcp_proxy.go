@@ -27,16 +27,16 @@ func TCPProxy(localAddr, remoteAddr string, handlers ...func(lconn, rconn net.Co
 		return
 	}
 
-	rconn, err := net.DialTCP(network, nil, raddr)
-	if err != nil {
-		return
-	}
-
 	for {
 		var lconn net.Conn
 		lconn, err = l.Accept()
 		if err != nil {
 			return
+		}
+
+		rconn, err := net.DialTCP(network, nil, raddr)
+		if err != nil {
+			return err
 		}
 
 		if len(handlers) == 0 {
@@ -48,7 +48,6 @@ func TCPProxy(localAddr, remoteAddr string, handlers ...func(lconn, rconn net.Co
 }
 
 func TCPProxyDefaultHandler(lconn, rconn net.Conn) {
-	// 读写完就退出了？那后面的数据怎么办？
 	go func() {
 		n, err := io.Copy(lconn, rconn)
 		if err == io.EOF {
