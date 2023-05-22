@@ -42,6 +42,7 @@ func XMLExtractor[R any](data []byte) (R, error) {
 	return r, nil
 }
 
+// SendHTTPRequest send http request and get result of type R. If you want to got resp header, the R should implement RespHeaderExtractor interface.
 func SendHTTPRequest[R any](
 	client *http.Client,
 	method string,
@@ -99,5 +100,15 @@ func SendHTTPRequest[R any](
 		return r, fmt.Errorf("extract result failed: %v, data: %s", err, data)
 	}
 
+	// with header
+	h := resp.Header
+	if e, ok := any(r).(RespHeaderExtractor); ok && e != nil {
+		e.Extract(h)
+	}
+
 	return r, nil
+}
+
+type RespHeaderExtractor interface {
+	Extract(h http.Header)
 }
