@@ -21,6 +21,7 @@ func TCPProxy(localAddr, remoteAddr string, handlers ...func(lconn, rconn net.Co
 		return
 	}
 	defer l.Close()
+	log.Printf("listen %v\n", laddr)
 
 	raddr, err := net.ResolveTCPAddr(network, remoteAddr)
 	if err != nil {
@@ -38,6 +39,7 @@ func TCPProxy(localAddr, remoteAddr string, handlers ...func(lconn, rconn net.Co
 		if err != nil {
 			return err
 		}
+		log.Printf("dial %v\n", raddr)
 
 		if len(handlers) == 0 {
 			TCPProxyDefaultHandler(lconn, rconn)
@@ -49,7 +51,10 @@ func TCPProxy(localAddr, remoteAddr string, handlers ...func(lconn, rconn net.Co
 
 func TCPProxyDefaultHandler(lconn, rconn net.Conn) {
 	go func() {
-		defer rconn.Close()
+		defer func() {
+			rconn.Close()
+			log.Printf("close remote conn\n")
+		}()
 
 		n, err := io.Copy(lconn, rconn)
 		if err == io.EOF {
@@ -62,7 +67,10 @@ func TCPProxyDefaultHandler(lconn, rconn net.Conn) {
 		log.Printf("copy %d bytes from remote to local\n", n)
 	}()
 	go func() {
-		defer lconn.Close()
+		defer func() {
+			lconn.Close()
+			log.Printf("close local conn\n")
+		}()
 
 		n, err := io.Copy(rconn, lconn)
 		if err == io.EOF {
