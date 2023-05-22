@@ -3,7 +3,7 @@ module github.com/donnol/do/cmd/letgo
 go 1.18
 
 require (
-	github.com/donnol/do v0.20.0
+	github.com/donnol/do v0.20.2
 	github.com/urfave/cli/v2 v2.25.3
 )
 
