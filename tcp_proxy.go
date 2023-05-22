@@ -49,6 +49,8 @@ func TCPProxy(localAddr, remoteAddr string, handlers ...func(lconn, rconn net.Co
 
 func TCPProxyDefaultHandler(lconn, rconn net.Conn) {
 	go func() {
+		defer rconn.Close()
+
 		n, err := io.Copy(lconn, rconn)
 		if err == io.EOF {
 			return
@@ -60,6 +62,8 @@ func TCPProxyDefaultHandler(lconn, rconn net.Conn) {
 		log.Printf("copy %d bytes from remote to local\n", n)
 	}()
 	go func() {
+		defer lconn.Close()
+
 		n, err := io.Copy(rconn, lconn)
 		if err == io.EOF {
 			return
