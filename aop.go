@@ -1,6 +1,7 @@
 package do
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -96,7 +97,7 @@ func GlobalProxyCtxMap() *ProxyCtxFuncStore {
 }
 
 type Tracer interface {
-	New(ProxyContext) Tracer // 新建Tracer，每个方法调用均新建一个
+	New(pctx ProxyContext, extras ...any) Tracer // 新建Tracer，每个方法调用均新建一个
 	Begin()
 	Stop()
 }
@@ -114,10 +115,10 @@ func RegisterProxyTracer(tracers ...Tracer) {
 }
 
 // ProxyTraceBegin LIFO
-func ProxyTraceBegin(pctx ProxyContext) (stop func()) {
+func ProxyTraceBegin(pctx ProxyContext, extras ...any) (stop func()) {
 	stops := make([]func(), 0, len(gtracers))
 	for _, tc := range gtracers {
-		o := tc.New(pctx)
+		o := tc.New(pctx, extras...)
 		o.Begin()
 		stops = append(stops, o.Stop)
 	}
@@ -131,13 +132,19 @@ func ProxyTraceBegin(pctx ProxyContext) (stop func()) {
 }
 
 type TimeTracer struct {
-	pctx  ProxyContext
-	begin time.Time
+	pctx    ProxyContext
+	traceId string
+	begin   time.Time
 }
 
-func (impl *TimeTracer) New(pctx ProxyContext) Tracer {
+type TraceKey struct{}
+
+func (impl *TimeTracer) New(pctx ProxyContext, extras ...any) Tracer {
+	traceId := parseExtra(extras...)
+
 	return &TimeTracer{
-		pctx: pctx,
+		pctx:    pctx,
+		traceId: traceId,
 	}
 }
 
@@ -146,5 +153,21 @@ func (impl *TimeTracer) Begin() {
 }
 
 func (impl *TimeTracer) Stop() {
-	log.Output(3, fmt.Sprintf("[%s] used time %v\n", impl.pctx, time.Since(impl.begin)))
+	log.Output(3, fmt.Sprintf("[%s] |%s| used time %v\n", impl.pctx, impl.traceId, time.Since(impl.begin)))
+}
+
+func parseExtra(extras ...any) (traceId string) {
+	if len(extras) == 0 {
+		return
+	}
+
+	ctx, ok := extras[0].(context.Context)
+	if ok {
+		v := ctx.Value(TraceKey{})
+		if vv, ok := v.(string); ok {
+			traceId = vv
+		}
+	}
+
+	return
 }

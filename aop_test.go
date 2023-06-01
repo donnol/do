@@ -17,7 +17,7 @@ type tracerImpl struct {
 
 var i int
 
-func (impl *tracerImpl) New(pctx ProxyContext) Tracer {
+func (impl *tracerImpl) New(pctx ProxyContext, extras ...any) Tracer {
 	i++
 	return &tracerImpl{
 		pctx: pctx,
