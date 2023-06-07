@@ -99,6 +99,16 @@ func TestDoHTTPRequest(t *testing.T) {
 	}
 }
 
+func TestSendHTTPRequest_Raw(t *testing.T) {
+	r, err := SendHTTPRequest(nil, http.MethodGet, "https://www.bing.com/hp/api/model", nil, nil, CodeIs200, RawExtractor)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(r) == 0 {
+		t.Errorf("bad case, bytes is empty")
+	}
+}
+
 func TestDoHTTPRequest_RespHeader(t *testing.T) {
 	type args[R any] struct {
 		client        *http.Client

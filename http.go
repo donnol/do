@@ -24,6 +24,10 @@ type (
 	ResultExtractor[R any] func(data []byte) (R, error)
 )
 
+func RawExtractor(data []byte) ([]byte, error) {
+	return data, nil
+}
+
 func JSONExtractor[R any](data []byte) (R, error) {
 	var r R
 	if err := json.Unmarshal(data, &r); err != nil {
