@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -148,4 +149,67 @@ func TestRunEvent(t *testing.T) {
 			t.Error("bad case")
 		}
 	})
+}
+
+func TestEventLoop(t *testing.T) {
+	type args struct {
+		ctx C
+		n   int
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		// TODO: Add test cases.
+		{
+			name: "1",
+			args: args{
+				ctx: context.TODO(),
+				n:   10,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1 := EventLoop[int, string, string](tt.args.ctx, tt.args.n)
+
+			for _, e := range []struct {
+				id int
+				s  string
+			}{
+				{
+					id: 1,
+					s:  "1",
+				},
+				{
+					id: 2,
+					s:  "2",
+				},
+				{
+					id: 3,
+					s:  "3",
+				},
+			} {
+				got <- EventEntity[int, string, string]{
+					Param: e.id,
+					Do: func(ctx context.Context, id int) (string, error) {
+						return strconv.Itoa(id), nil
+					},
+					Success: func(id string) string {
+						return id
+					},
+					Failed: func(err error) string {
+						return err.Error()
+					},
+					Handler: func(id string) {
+						if id != e.s {
+							t.Errorf("bad case: %s != %s", id, e.s)
+						}
+					},
+				}
+			}
+
+			got1 <- struct{}{}
+		})
+	}
 }
