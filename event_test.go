@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 type Before struct {
@@ -190,6 +191,8 @@ func TestEventLoop(t *testing.T) {
 					s:  "3",
 				},
 			} {
+				e := e // avoid shadow
+
 				got <- EventEntity[int, string, string]{
 					Param: e.id,
 					Do: func(ctx context.Context, id int) (string, error) {
@@ -210,6 +213,49 @@ func TestEventLoop(t *testing.T) {
 			}
 
 			got1 <- struct{}{}
+			time.Sleep(time.Millisecond * 200)
+
+			// 停止后继续发送: panic: send on closed channel
+			func() {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Error("need panic")
+					} else {
+						if !strings.Contains(fmt.Sprintf("%v", r), "send on closed channel") {
+							t.Errorf("bad case, don't got 'send on closed channel' error: %v", r)
+						}
+					}
+				}()
+
+				for _, e := range []struct {
+					id int
+					s  string
+				}{
+					{
+						id: 4,
+						s:  "4",
+					},
+				} {
+					got <- EventEntity[int, string, string]{
+						Param: e.id,
+						Do: func(ctx context.Context, id int) (string, error) {
+							return strconv.Itoa(id), nil
+						},
+						Success: func(id string) string {
+							return id
+						},
+						Failed: func(err error) string {
+							return err.Error()
+						},
+						Handler: func(id string) {
+							if id != e.s {
+								t.Errorf("bad case: %s != %s", id, e.s)
+							}
+						},
+					}
+				}
+			}()
+
 		})
 	}
 }

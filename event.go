@@ -85,6 +85,11 @@ func EventLoop[I, O, R any](ctx C, n int) (chan<- EventEntity[I, O, R], chan<- s
 	stopch := make(chan struct{}, 1)
 
 	go func() {
+		defer func() {
+			close(innerch)
+			close(stopch)
+		}()
+
 		for {
 			select {
 			case event := <-innerch:
