@@ -133,11 +133,14 @@ func ProxyTraceBegin(pctx ProxyContext, extras ...any) (stop func()) {
 
 type TimeTracer struct {
 	pctx    ProxyContext
-	traceId string
+	traceId TraceId
 	begin   time.Time
 }
 
-type TraceKey struct{}
+type (
+	TraceKey struct{}
+	TraceId  string
+)
 
 func (impl *TimeTracer) New(pctx ProxyContext, extras ...any) Tracer {
 	traceId := parseExtra(extras...)
@@ -156,7 +159,7 @@ func (impl *TimeTracer) Stop() {
 	log.Output(3, fmt.Sprintf("[%s] |%s| used time %v\n", impl.pctx, impl.traceId, time.Since(impl.begin)))
 }
 
-func parseExtra(extras ...any) (traceId string) {
+func parseExtra(extras ...any) (traceId TraceId) {
 	if len(extras) == 0 {
 		return
 	}
@@ -165,6 +168,8 @@ func parseExtra(extras ...any) (traceId string) {
 	if ok {
 		v := ctx.Value(TraceKey{})
 		if vv, ok := v.(string); ok {
+			traceId = TraceId(vv)
+		} else if vv, ok := v.(TraceId); ok {
 			traceId = vv
 		}
 	}
