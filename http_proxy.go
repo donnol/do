@@ -12,14 +12,10 @@ type HTTPProxyOption struct {
 	ErrorHandler   func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-// HTTPProxy listen localAddr and transfer any request to remoteAddr. We can use handlers to specify one custom func to transfer data.
-func HTTPProxy(localAddr, remoteAddr string, opt *HTTPProxyOption) (err error) {
-	url, err := url.Parse(remoteAddr)
-	if err != nil {
-		return err
+func (opt *HTTPProxyOption) complete(rp *httputil.ReverseProxy) {
+	if rp == nil {
+		return
 	}
-
-	rp := httputil.NewSingleHostReverseProxy(url)
 	if opt != nil {
 		if opt.Director != nil {
 			rp.Director = opt.Director
@@ -31,6 +27,17 @@ func HTTPProxy(localAddr, remoteAddr string, opt *HTTPProxyOption) (err error) {
 			rp.ErrorHandler = opt.ErrorHandler
 		}
 	}
+}
+
+// HTTPProxy listen localAddr and transfer any request to remoteAddr. We can use handlers to specify one custom func to transfer data.
+func HTTPProxy(localAddr, remoteAddr string, opt *HTTPProxyOption) (err error) {
+	url, err := url.Parse(remoteAddr)
+	if err != nil {
+		return err
+	}
+
+	rp := httputil.NewSingleHostReverseProxy(url)
+	opt.complete(rp)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
