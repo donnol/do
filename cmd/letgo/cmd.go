@@ -1,7 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
+	"os"
+
 	"github.com/donnol/do"
+	"github.com/donnol/do/cmd/letgo/sqlparser"
+	"github.com/donnol/do/parser"
 	"github.com/urfave/cli/v2"
 )
 
@@ -26,6 +32,111 @@ var (
 					DefaultText: "127.0.0.1:54399",
 					Value:       "127.0.0.1:54399",
 				},
+			},
+		},
+		{
+			Name:  "sql2struct",
+			Usage: `letgo sql2struct 'create table user(id int not null)'`,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:        "ignore",
+					DefaultText: "",
+					Usage:       "ignore field like order_number",
+				},
+				&cli.StringFlag{
+					Name:        "file",
+					Aliases:     []string{"f"},
+					DefaultText: "",
+					Value:       "",
+					Usage:       "specify sql file to input",
+				},
+				&cli.StringFlag{
+					Name:        "output",
+					Aliases:     []string{"o"},
+					DefaultText: "",
+					Value:       "",
+					Usage:       "specify output file",
+				},
+				&cli.StringFlag{
+					Name:        "pkg",
+					DefaultText: "",
+					Value:       "",
+					Usage:       "specify package name",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				// 标志
+				ignoreField := c.String("ignore")
+				file := c.String("file")
+				output := c.String("output")
+				pkg := c.String("pkg")
+
+				sql := ""
+				if len(c.Args().Slice()) > 0 {
+					sql = c.Args().Slice()[0]
+				} else if file != "" {
+					data, err := os.ReadFile(file)
+					if err != nil {
+						fmt.Printf("read file failed: %v\n", err)
+						os.Exit(1)
+					}
+					sql = string(data)
+				}
+
+				if sql == "" {
+					fmt.Printf("please specify sql like 'create table user(id int not null)' or input file by --file=xxx.sql\n")
+					os.Exit(1)
+				}
+
+				opt := sqlparser.Option{}
+				if ignoreField != "" {
+					opt.IgnoreField = append(opt.IgnoreField, ignoreField)
+				}
+
+				ss := sqlparser.ParseCreateSQLBatch(sql)
+				if ss == nil {
+					fmt.Printf("parse sql failed\n")
+					os.Exit(1)
+				}
+
+				w := os.Stdout
+				if output != "" {
+					f, err := os.OpenFile(output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, os.ModePerm)
+					if err != nil {
+						fmt.Printf("open file %s failed: %v\n", output, err)
+						os.Exit(1)
+					}
+					defer f.Close()
+
+					w = f
+				}
+				buf := new(bytes.Buffer)
+				if pkg != "" {
+					_, err := buf.WriteString("package " + pkg)
+					if err != nil {
+						fmt.Printf("write package name failed: %v\n", err)
+						os.Exit(1)
+					}
+				}
+				for _, s := range ss {
+					if err := s.Gen(buf, opt); err != nil {
+						fmt.Printf("gen struct failed: %v\n", err)
+						os.Exit(1)
+					}
+				}
+				content, err := parser.Format(output, buf.String(), false)
+				if err != nil {
+					fmt.Printf("format failed: %v\ncontent: %s\n", err, buf.String())
+					os.Exit(1)
+				}
+				_, err = w.WriteString(content)
+				if err != nil {
+					fmt.Printf("write to w failed: %v\n", err)
+					os.Exit(1)
+				}
+				fmt.Println()
+
+				return nil
 			},
 		},
 	}
