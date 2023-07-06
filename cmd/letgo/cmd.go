@@ -3,7 +3,10 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"os"
+	"strings"
+	"sync"
 
 	"github.com/donnol/do"
 	"github.com/donnol/do/cmd/letgo/sqlparser"
@@ -19,6 +22,26 @@ var (
 			Usage:       "letgo proxy --localAddr=':54388' --remoteAddr='127.0.0.1:54399'",
 			Description: "tcp proxy",
 			Action: func(c *cli.Context) error {
+				pair := c.String("pair")
+				if pair != "" {
+					wg := new(sync.WaitGroup)
+					for _, pai := range strings.Split(pair, ",") {
+						wg.Add(1)
+						go func(pai string) {
+							defer wg.Done()
+
+							parts := strings.Split(pai, "->")
+
+							if err := do.TCPProxy(parts[0], parts[1]); err != nil {
+								log.Printf("tcp proxy from %s to %s failed: %v", parts[0], parts[1], err)
+								return
+							}
+						}(pai)
+					}
+					wg.Wait()
+
+					return nil
+				}
 				return do.TCPProxy(c.String("localAddr"), c.String("remoteAddr"))
 			},
 			Flags: []cli.Flag{
@@ -31,6 +54,10 @@ var (
 					Name:        "remoteAddr",
 					DefaultText: "127.0.0.1:54399",
 					Value:       "127.0.0.1:54399",
+				},
+				&cli.StringFlag{
+					Name:  "pair",
+					Usage: "specify proxy pairs, not work with localAddr and remoteAddr like ':54388->127.0.0.1:54399,:54389->127.0.0.1:54398'",
 				},
 			},
 		},
