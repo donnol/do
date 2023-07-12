@@ -1,6 +1,9 @@
 package do
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 // Must panic if err is not nill
 func Must(err error) {
@@ -62,5 +65,51 @@ func mustCheckArgs(wantLength int, args ...any) {
 
 	if v, ok := args[l-1].(error); ok && v != nil {
 		panic(NewError(efrom(v)))
+	}
+}
+
+// Log log the err if err is not nill and continue
+func Log(err error) {
+	logError(err)
+}
+
+// Log1 log the err if err is not nill，and continue with 1 result
+func Log1[T any](a1 T, err error) T {
+	logError(err)
+
+	return a1
+}
+
+// Log2 log the err if err is not nill，and continue with 2 result
+func Log2[T1, T2 any](a1 T1, a2 T2, err error) (T1, T2) {
+	logError(err)
+
+	return a1, a2
+}
+
+// Log3 log the err if err is not nill，and continue with 3 result
+func Log3[T1, T2, T3 any](a1 T1, a2 T2, a3 T3, err error) (T1, T2, T3) {
+	logError(err)
+
+	return a1, a2, a3
+}
+
+// Log4 log the err if err is not nill，and continue with 4 result
+func Log4[T1, T2, T3, T4 any](a1 T1, a2 T2, a3 T3, a4 T4, err error) (T1, T2, T3, T4) {
+	logError(err)
+
+	return a1, a2, a3, a4
+}
+
+// Log5 log the err if err is not nill，and continue with 5 result
+func Log5[T1, T2, T3, T4, T5 any](a1 T1, a2 T2, a3 T3, a4 T4, a5 T5, err error) (T1, T2, T3, T4, T5) {
+	logError(err)
+
+	return a1, a2, a3, a4, a5
+}
+
+func logError(err error) {
+	if err != nil {
+		log.Println(NewError(efrom(err)))
 	}
 }

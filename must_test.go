@@ -3,6 +3,7 @@ package do_test
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/donnol/do"
@@ -163,5 +164,41 @@ func TestMustN(t *testing.T) {
 		if r1 != 1 && r2 != "" && r3 != "" && r4 != 0 && r5 != 0 {
 			t.Errorf("bad case: %v != %v", r, 1)
 		}
+	}
+}
+
+func TestLog1(t *testing.T) {
+	type args struct {
+		a1  int
+		err error
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			name: "0",
+			args: args{
+				a1:  0,
+				err: errors.New("err show"),
+			},
+			want: 0,
+		},
+		{
+			name: "1",
+			args: args{
+				a1:  1,
+				err: errors.New("err show"),
+			},
+			want: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := do.Log1(tt.args.a1, tt.args.err); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Log1() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
