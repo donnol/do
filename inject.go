@@ -7,9 +7,9 @@ import (
 	"unsafe"
 )
 
-// Ioc 控制反转，Inversion of Control
+// Ioc Inversion of Control, dependency inject
 type Ioc struct {
-	enableUnexportedFieldSetValue bool // 开启对非导出字段的赋值
+	enableUnexportedFieldSetValue bool // set value to unexported field
 	print                         bool
 
 	providerMap map[reflect.Type]typeInfo
@@ -17,8 +17,8 @@ type Ioc struct {
 }
 
 type IocOption struct {
-	EnableUnexportedFieldSetValue bool // 开启对非导出字段的赋值
-	Print                         bool // 打印初始话的对象
+	EnableUnexportedFieldSetValue bool // set value to unexported field
+	Print                         bool // print inject procedure
 }
 
 type typeInfo struct {
@@ -40,7 +40,7 @@ func NewIoc(
 	}
 }
 
-// RegisterProvider 注册provider函数，形如`func New(fielda TypeA, fieldb TypeB) (T)`
+// RegisterProvider register provider，like `func New(fielda TypeA, fieldb TypeB) (T)`
 func (ioc *Ioc) RegisterProvider(v any) (err error) {
 	refValue := reflect.ValueOf(v)
 	refType := refValue.Type()
@@ -57,6 +57,7 @@ func (ioc *Ioc) RegisterProvider(v any) (err error) {
 		in := refType.In(i)
 		ti.depType = append(ti.depType, in)
 	}
+
 	// 返回：instance
 	min := 1
 	if refType.NumOut() == 0 {
@@ -73,9 +74,9 @@ func (ioc *Ioc) RegisterProvider(v any) (err error) {
 	return
 }
 
-// Inject 为对象注入依赖，传入结构体指针，根据结构体的字段类型找到对应的provider，执行后将获得的值赋予字段
+// Inject init v with providers. v is a struct pointer.
 //
-// 如果provider需要参数，则根据参数类型继续找寻相应的provider，直至初始化完成
+// If provider need parameters, it will lookup a right value by it's type.
 func (ioc *Ioc) Inject(v any) (err error) {
 	refValue := reflect.ValueOf(v)
 	refType := refValue.Type()
