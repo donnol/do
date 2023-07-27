@@ -1,6 +1,6 @@
 package do
 
-// PtrTo return pointer of a new value copied from v
+// PtrTo [deprecate] return pointer of a new value copied from v
 func PtrTo[T any](v T) *T { return &v }
 
 func Zero[T any]() T {
