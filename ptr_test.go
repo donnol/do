@@ -131,6 +131,19 @@ func ptrCase() (int, *int) {
 	return a, &a
 }
 
+func TestPtr2(t *testing.T) {
+	var a = 1
+
+	// 多次取指针，返回相同值
+	ap := &a
+	ap1 := &a
+
+	ap2 := PtrTo(a) // 传参时复制了a的值，返回的是一个新的值的指针，又因为逃逸分析，这个新值被分配到堆上
+
+	// 可以看到，指针值不同，但reflect.DeepEqual比较时返回true
+	t.Log(ap, ap1, ap2, reflect.DeepEqual(ap, ap2)) // 0xc0000280f8 0xc000028100 true
+}
+
 type I interface {
 	String()
 }
