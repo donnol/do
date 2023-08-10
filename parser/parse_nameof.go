@@ -39,8 +39,7 @@ func ReplaceNameof(pkg string) {
 		for _, file := range pkg.Syntax {
 			file := file
 			var (
-				reachNameof  bool
-				nameofCursor *astutil.Cursor
+				reachNameof bool
 			)
 			node := astutil.Apply(file, func(c *astutil.Cursor) bool {
 				if reachNameof {
@@ -72,19 +71,19 @@ func ReplaceNameof(pkg string) {
 					}
 					if err == nil && ne != nil {
 						fmt.Println("==== replace before ====")
-						ast.Print(token.NewFileSet(), nameofCursor.Node())
-						nameofCursor.Replace(ne)
+						c.Replace(ne)
 						fmt.Println("==== replace after ====")
 					}
 
 					reachNameof = false
-					nameofCursor = nil
 				}
 
 				ci, ok := c.Node().(*ast.Ident)
 				if ok && ci.Name == "nameof" && ci.Obj != nil && ci.Obj.Kind == ast.Fun {
 					reachNameof = true
-					nameofCursor = c
+
+					c.Replace(ast.NewIdent(""))
+
 					// ast.Print(token.NewFileSet(), ci)
 				}
 
@@ -103,7 +102,4 @@ func ReplaceNameof(pkg string) {
 	}
 
 	_ = npkgs
-	// if err := printer.Fprint(os.Stdout, token.NewFileSet(), npkgs); err != nil {
-	// 	panic(err)
-	// }
 }
