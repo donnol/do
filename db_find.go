@@ -7,9 +7,13 @@ import (
 	"reflect"
 )
 
-type Finder[R any] interface {
+type Queryer interface {
 	// return query sql and args
 	Query() (query string, args []any)
+}
+
+type Finder[R any] interface {
+	Queryer
 
 	// new a result type object, not the same, to receive every row
 	// fields must be pointer type of result object's field, and it is match with query sql's select column one by one
@@ -36,6 +40,7 @@ var (
 type Storer interface {
 	*sql.DB | *sql.Tx | *sql.Conn
 	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 }
 
 func FindList[S Storer, F Finder[R], R any](db S, finder F, res *[]R) (err error) {

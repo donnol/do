@@ -1,9 +1,11 @@
 package do
 
 import (
+	"database/sql"
 	"testing"
 
 	"github.com/donnol/do"
+	"github.com/jmoiron/sqlx"
 )
 
 func TestBatch(t *testing.T) {
@@ -49,5 +51,47 @@ func TestBatchConcurrent(t *testing.T) {
 	}, 2)
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+type batchFinderOfUser struct {
+	ids []uint64
+}
+
+func (f *batchFinderOfUser) Query() (query string, args []any) {
+	query = `select * from user where id IN (?)`
+	args = append(args, f.ids)
+	return
+}
+
+func (f *batchFinderOfUser) Batch() [][]any {
+	r := make([][]any, 0, 3)
+	for _, id := range f.ids {
+		id := id
+		r = append(r, []any{id})
+	}
+	return r
+}
+
+func (f *batchFinderOfUser) NewScanObjAndFields(colTypes []*sql.ColumnType) (r *UserForDB, fields []any) {
+	r = &UserForDB{}
+
+	fields = do.FieldsByColumnType(r, colTypes, nil)
+
+	return
+}
+
+func TestFindWithBatch(t *testing.T) {
+	finder := &batchFinderOfUser{
+		ids: []uint64{1, 2, 3},
+	}
+	u := []UserForDB{}
+	if err := do.FindWithBatch(tdb, finder, &u); err != nil {
+		q, a := finder.Query()
+		t.Error(err, q, a, finder.Batch())
+		t.Log(sqlx.In(q, a))
+	}
+	if len(u) != 1 && u[0].Id != 1 {
+		t.Errorf("bad result: %+v", u)
 	}
 }
