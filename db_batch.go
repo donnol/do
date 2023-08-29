@@ -118,27 +118,17 @@ func BatchConcurrent[S Storer, F Finder[R], R any](db S, finder F, batchNum int,
 	return
 }
 
-type Batcher interface {
-	Batch() [][]any
-}
-
-type BatchQueryer interface {
-	Queryer
-	Batcher
-}
-
-type BatchFinder[T any] interface {
-	Finder[T]
-	Batcher
+type Batcher[T any] interface {
+	Batch() []Finder[T]
 }
 
 // FindWithBatch use batchFunc to split args to little batch, for example: args is 1, [1, 2, 3], split to 3 batch is: 1, [1]; 1, [2]; 3, [3], the slice become little while the others is not change
-func FindWithBatch[S Storer, F BatchFinder[R], R any](db S, finder F, res *[]R) (err error) {
-	query, _ := finder.Query()
-
+func FindWithBatch[S Storer, B Batcher[R], R any](db S, batcher B, res *[]R) (err error) {
 	// 如果args参数里存在数组或切片，则分批获取
-	for _, bargs := range finder.Batch() {
-		rows, err := db.QueryContext(context.TODO(), query, bargs...)
+	for _, finder := range batcher.Batch() {
+		query, args := finder.Query()
+
+		rows, err := db.QueryContext(context.TODO(), query, args...)
 		if err != nil {
 			return err
 		}
@@ -166,11 +156,11 @@ func FindWithBatch[S Storer, F BatchFinder[R], R any](db S, finder F, res *[]R) 
 }
 
 // ExecWithBatch exec with batch
-func ExecWithBatch[S Storer, Q BatchQueryer](db S, q Q) (ra, lid int64, err error) {
-	query, _ := q.Query()
+func ExecWithBatch[S Storer, Q Queryer](db S, batch []Q) (ra, lid int64, err error) {
+	for _, finder := range batch {
+		query, args := finder.Query()
 
-	for _, bargs := range q.Batch() {
-		r, err := db.ExecContext(context.TODO(), query, bargs...)
+		r, err := db.ExecContext(context.TODO(), query, args...)
 		if err != nil {
 			return 0, 0, err
 		}

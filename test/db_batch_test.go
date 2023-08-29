@@ -60,17 +60,8 @@ type batchFinderOfUser struct {
 
 func (f *batchFinderOfUser) Query() (query string, args []any) {
 	query = `select * from user where id IN (?)`
-	args = append(args, f.ids)
+	query, args, _ = sqlx.In(query, f.ids)
 	return
-}
-
-func (f *batchFinderOfUser) Batch() [][]any {
-	r := make([][]any, 0, 3)
-	for _, id := range f.ids {
-		id := id
-		r = append(r, []any{id})
-	}
-	return r
 }
 
 func (f *batchFinderOfUser) NewScanObjAndFields(colTypes []*sql.ColumnType) (r *UserForDB, fields []any) {
@@ -81,17 +72,26 @@ func (f *batchFinderOfUser) NewScanObjAndFields(colTypes []*sql.ColumnType) (r *
 	return
 }
 
+type batcher struct {
+	ids []uint64
+}
+
+func (b *batcher) Batch() (r []do.Finder[UserForDB]) {
+	for _, id := range b.ids {
+		r = append(r, &batchFinderOfUser{ids: []uint64{id}})
+	}
+	return
+}
+
 func TestFindWithBatch(t *testing.T) {
-	finder := &batchFinderOfUser{
+	finder := &batcher{
 		ids: []uint64{1, 2, 3},
 	}
 	u := []UserForDB{}
 	if err := do.FindWithBatch(tdb, finder, &u); err != nil {
-		q, a := finder.Query()
-		t.Error(err, q, a, finder.Batch())
-		t.Log(sqlx.In(q, a))
+		t.Error(err, finder.Batch())
 	}
-	if len(u) != 1 && u[0].Id != 1 {
+	if len(u) != 1 || u[0].Id != 1 {
 		t.Errorf("bad result: %+v", u)
 	}
 }
