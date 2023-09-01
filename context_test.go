@@ -4,13 +4,20 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+	"unsafe"
 )
 
 func TestContextHelper(t *testing.T) {
 	{
 		type nameck struct{}
 		ctx := context.Background()
-		helper := NewContextHelper[nameck, string]()
+		helper := ContextHelper[nameck, string]{}
+		{
+			ksize, ssize := unsafe.Sizeof(nameck{}), unsafe.Sizeof(helper)
+			if ksize != 0 || ssize != 0 {
+				t.Fatalf("bad size of var, ksize: %d, ssize: %d", ksize, ssize)
+			}
+		}
 		ctx = helper.WithValue(ctx, "1")
 		v := helper.MustValue(ctx)
 		if v != "1" {
@@ -29,7 +36,7 @@ func TestContextHelper(t *testing.T) {
 		// other helper will replace value too, because the k always is `nameck{}`
 		{
 			// ctx := context.Background()
-			helper := NewContextHelper[nameck, string]()
+			helper := ContextHelper[nameck, string]{}
 			ctx = helper.WithValue(ctx, "3")
 			v := helper.MustValue(ctx)
 			if v != "3" {
@@ -47,7 +54,7 @@ func TestContextHelper(t *testing.T) {
 				}
 			}()
 			type novalueck struct{}
-			helper := NewContextHelper[novalueck, string]()
+			helper := ContextHelper[novalueck, string]{}
 			v, ok := helper.Value(ctx)
 			if ok || v != "" {
 				t.Fatalf("bad case, invalid v or ok")
@@ -59,7 +66,7 @@ func TestContextHelper(t *testing.T) {
 	{
 		type dbconnck struct{}
 		ctx := context.Background()
-		helper := NewContextHelper[dbconnck, *sql.Conn]()
+		helper := ContextHelper[dbconnck, *sql.Conn]{}
 		ctx = helper.WithValue(ctx, &sql.Conn{})
 		v := helper.MustValue(ctx)
 		if v == nil {
