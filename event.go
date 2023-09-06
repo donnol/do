@@ -45,14 +45,14 @@ func Event[I, O, R any](
 	ctx C,
 	param I,
 	do PipeFunc[I, O],
-	success func(O) R,
-	failed func(E) R,
-) (r R) {
-	o, err := do(ctx, param)
-	if err != nil {
-		r = failed(err)
+	success PipeFunc[O, R],
+	failed PipeFunc[E, R],
+) (r R, err E) {
+	o, berr := do(ctx, param)
+	if berr != nil {
+		r, err = failed(ctx, berr)
 	} else {
-		r = success(o)
+		r, err = success(ctx, o)
 	}
 	return
 }
@@ -62,17 +62,17 @@ type (
 		ctx C,
 		param I,
 		do PipeFunc[I, O],
-		success func(O) R,
-		failed func(E) R,
-	) (r R)
+		success PipeFunc[O, R],
+		failed PipeFunc[E, R],
+	) (r R, err E)
 
 	EventEntity[I, O, R any] struct {
 		Param   I
 		Do      PipeFunc[I, O]
-		Success func(O) R
-		Failed  func(E) R
+		Success PipeFunc[O, R]
+		Failed  PipeFunc[E, R]
 
-		Handler func(R)
+		Handler func(R, E)
 	}
 )
 
@@ -93,8 +93,8 @@ func EventLoop[I, O, R any](ctx C, n int) (chan<- EventEntity[I, O, R], chan<- s
 		for {
 			select {
 			case event := <-innerch:
-				r := Event(ctx, event.Param, event.Do, event.Success, event.Failed)
-				event.Handler(r)
+				r, err := Event(ctx, event.Param, event.Do, event.Success, event.Failed)
+				event.Handler(r, err)
 			case <-stopch:
 				return
 			}

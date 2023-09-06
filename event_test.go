@@ -120,12 +120,12 @@ func TestRunEvent(t *testing.T) {
 
 		Event(context.Background(), 1, func(ctx C, i int) (string, E) {
 			return "h", nil
-		}, func(s string) string {
+		}, func(ctx C, s string) (string, error) {
 			fmt.Fprintf(buf, "success: %v\n", s)
-			return s
-		}, func(err error) string {
+			return s, nil
+		}, func(ctx C, err error) (string, error) {
 			fmt.Fprintf(buf, "failed: %v\n", err)
-			return err.Error()
+			return "", err
 		})
 
 		if !strings.Contains(buf.String(), "success") {
@@ -138,12 +138,12 @@ func TestRunEvent(t *testing.T) {
 
 		Event(context.Background(), 1, func(ctx C, i int) (string, E) {
 			return "", fmt.Errorf("bad case")
-		}, func(s string) string {
+		}, func(ctx C, s string) (string, error) {
 			fmt.Fprintf(buf, "success: %v\n", s)
-			return s
-		}, func(err error) string {
+			return s, nil
+		}, func(ctx C, err error) (string, error) {
 			fmt.Fprintf(buf, "failed: %v\n", err)
-			return err.Error()
+			return err.Error(), nil
 		})
 
 		if !strings.Contains(buf.String(), "failed") {
@@ -198,13 +198,13 @@ func TestEventLoop(t *testing.T) {
 					Do: func(ctx context.Context, id int) (string, error) {
 						return strconv.Itoa(id), nil
 					},
-					Success: func(id string) string {
-						return id
+					Success: func(ctx C, id string) (string, error) {
+						return id, nil
 					},
-					Failed: func(err error) string {
-						return err.Error()
+					Failed: func(ctx C, err error) (string, error) {
+						return err.Error(), nil
 					},
-					Handler: func(id string) {
+					Handler: func(id string, err error) {
 						if id != e.s {
 							t.Errorf("bad case: %s != %s", id, e.s)
 						}
@@ -241,13 +241,13 @@ func TestEventLoop(t *testing.T) {
 						Do: func(ctx context.Context, id int) (string, error) {
 							return strconv.Itoa(id), nil
 						},
-						Success: func(id string) string {
-							return id
+						Success: func(ctx C, id string) (string, error) {
+							return id, nil
 						},
-						Failed: func(err error) string {
-							return err.Error()
+						Failed: func(ctx C, err error) (string, error) {
+							return err.Error(), nil
 						},
-						Handler: func(id string) {
+						Handler: func(id string, err error) {
 							if id != e.s {
 								t.Errorf("bad case: %s != %s", id, e.s)
 							}
