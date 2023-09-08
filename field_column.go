@@ -7,6 +7,19 @@ import (
 	"strings"
 )
 
+func ObjectAndFieldsHelper[T any](fieldMappers ...func(string) string) func(colTypes []*sql.ColumnType) (r *T, fields []any) {
+	var fieldMapper func(string) string
+	if len(fieldMappers) != 0 {
+		fieldMapper = fieldMappers[0]
+	}
+
+	return func(colTypes []*sql.ColumnType) (r *T, fields []any) {
+		r = new(T)
+		fields = FieldsByColumnType(r, colTypes, fieldMapper)
+		return
+	}
+}
+
 // FieldsByColumnType t is a struct pointer, and use it's field match column name to receive scan value. It will use db tag to get column name first, or lower case field name. You can specify fieldMapper to control column name with field name
 func FieldsByColumnType(t any, colTypes []*sql.ColumnType, fieldMapper func(string) string) (fields []any) {
 	validName := make(map[string]struct{})

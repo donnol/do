@@ -73,3 +73,9 @@ func Test_fieldsByColumnName(t *testing.T) {
 		})
 	}
 }
+
+func TestObjectFields(t *testing.T) {
+	genObj := ObjectAndFieldsHelper[UserEmbed]()
+	genObj(nil)
+	genObj(nil)
+}
