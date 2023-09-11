@@ -1,6 +1,6 @@
 package do
 
 type Enum[T any] struct {
-	Name  string
-	Value T
+	Name  string `json:"name"`
+	Value T      `json:"value"`
 }
