@@ -79,3 +79,36 @@ func TestObjectFields(t *testing.T) {
 	genObj(nil)
 	genObj(nil)
 }
+
+type ValuePtrs struct {
+	id   int
+	name string
+	addr string
+}
+
+func (v *ValuePtrs) ValuePtrs() []any {
+	return []any{
+		&v.id,
+		&v.name,
+		&v.addr,
+	}
+}
+
+func TestObjectFieldsValuePtrs(t *testing.T) {
+	genobj := ObjectAndFieldsHelper[ValuePtrs]()
+	_, fields := genobj(nil)
+	Assert(t, len(fields), 3)
+	Assert(t, fields[0] != nil, true)
+	Assert(t, fields[1] != nil, true)
+	Assert(t, fields[2] != nil, true)
+
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Fatal("no panic occur")
+			}
+		}()
+		// will panic because *ValuePtrs is not a interface{ ValuePtrs() []any } and colTypes is nil
+		ObjectAndFieldsHelper[*ValuePtrs]()(nil)
+	}()
+}

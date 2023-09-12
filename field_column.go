@@ -15,7 +15,12 @@ func ObjectAndFieldsHelper[T any](fieldMappers ...func(string) string) func(colT
 
 	return func(colTypes []*sql.ColumnType) (r *T, fields []any) {
 		r = new(T)
-		fields = FieldsByColumnType(r, colTypes, fieldMapper)
+		switch vi := any(r).(type) {
+		case interface{ ValuePtrs() []any }:
+			fields = append(fields, vi.ValuePtrs()...)
+		default:
+			fields = FieldsByColumnType(r, colTypes, fieldMapper)
+		}
 		return
 	}
 }
