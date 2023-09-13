@@ -37,6 +37,21 @@ var (
 	_ Finder[int] = (FindFunc[int])(nil)
 )
 
+// FindFuncHelper return FindFunc with T
+func FindFuncHelper[T any](
+	query string,
+	args []any,
+	fieldMappers ...func(string) string,
+) FindFunc[T] {
+	return func() (
+		string,
+		[]any,
+		func(colTypes []*sql.ColumnType) (r *T, fields []any),
+	) {
+		return query, args, ObjectAndFieldsHelper[T](fieldMappers...)
+	}
+}
+
 type Storer interface {
 	*sql.DB | *sql.Tx | *sql.Conn
 	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)

@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// ObjectAndFieldsHelper if *T is interface{ ValuePtrs() []any } then use its results as fields, otherwise use reflect to get fields by ColumnType
 func ObjectAndFieldsHelper[T any](fieldMappers ...func(string) string) func(colTypes []*sql.ColumnType) (r *T, fields []any) {
 	var fieldMapper func(string) string
 	if len(fieldMappers) != 0 {
