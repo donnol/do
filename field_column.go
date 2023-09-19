@@ -19,6 +19,28 @@ func ObjectAndFieldsHelper[T any](fieldMappers ...func(string) string) func(colT
 		switch vi := any(r).(type) {
 		case interface{ ValuePtrs() []any }:
 			fields = append(fields, vi.ValuePtrs()...)
+
+		// Scan 将从数据库读取的列转换为以下常见的 Go 类型和 sql 包提供的特殊类型：
+		//
+		// *string
+		// *[]byte
+		// *int, *int8, *int16, *int32, *int64
+		// *uint, *uint8, *uint16, *uint32, *uint64
+		// *bool
+		// *float32, *float64
+		// *interface{}
+		// *RawBytes
+		// *Rows (cursor value)
+		// any type implementing Scanner (see Scanner docs)
+		//
+		case *string,
+			*[]byte,
+			*bool,
+			*float32, *float64,
+			*int, *int8, *int16, *int32, *int64,
+			*uint, *uint8, *uint16, *uint32, *uint64:
+			fields = append(fields, r)
+
 		default:
 			fields = FieldsByColumnType(r, colTypes, fieldMapper)
 		}

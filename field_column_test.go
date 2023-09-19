@@ -111,4 +111,29 @@ func TestObjectFieldsValuePtrs(t *testing.T) {
 		// will panic because *ValuePtrs is not a interface{ ValuePtrs() []any } and colTypes is nil
 		ObjectAndFieldsHelper[*ValuePtrs]()(nil)
 	}()
+
+	{
+		genobj := ObjectAndFieldsHelper[string]()
+		sp, fields := genobj(nil)
+		Assert(t, len(fields), 1)
+		Assert(t, fields[0].(*string), sp)
+	}
+	{
+		genobj := ObjectAndFieldsHelper[[]byte]()
+		sp, fields := genobj(nil)
+		Assert(t, len(fields), 1)
+		Assert(t, fields[0].(*[]byte), sp)
+	}
+	{
+		genobj := ObjectAndFieldsHelper[int]()
+		sp, fields := genobj(nil)
+		Assert(t, len(fields), 1)
+		Assert(t, fields[0].(*int), sp)
+	}
+	{
+		genobj := ObjectAndFieldsHelper[float64]()
+		sp, fields := genobj(nil)
+		Assert(t, len(fields), 1)
+		Assert(t, fields[0].(*float64), sp)
+	}
 }
