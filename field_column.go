@@ -68,12 +68,12 @@ func fieldsByColumnName(t any, validName map[string]struct{}, fieldMapper func(s
 	val := reflect.ValueOf(t)
 	typ := val.Type()
 	if typ.Kind() != reflect.Ptr {
-		panic(fmt.Errorf("t must be a struct pointer"))
+		panic(fmt.Errorf("t must be a struct pointer, but t's type is %v", typ))
 	}
 	val = val.Elem()
 	typ = typ.Elem()
 	if typ.Kind() != reflect.Struct {
-		panic(fmt.Errorf("t must be a struct pointer"))
+		panic(fmt.Errorf("t must be a struct pointer, but t's type is %v", typ))
 	}
 
 	return fieldsByColumnNameInner(typ, val, validName, fieldMapper)

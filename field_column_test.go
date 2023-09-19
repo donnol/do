@@ -1,6 +1,7 @@
 package do
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -72,6 +73,18 @@ func Test_fieldsByColumnName(t *testing.T) {
 			}
 		})
 	}
+
+	// panic
+	func() {
+		defer func() {
+			if v := recover(); v != nil {
+				Assert(t, fmt.Sprintf("%s", v), "t must be a struct pointer, but t's type is int")
+			}
+		}()
+
+		var s int
+		fieldsByColumnName(&s, nil, nil)
+	}()
 }
 
 func TestObjectFields(t *testing.T) {
