@@ -3,6 +3,7 @@ module github.com/donnol/do/cmd/letgo
 go 1.18
 
 require (
+	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
 	github.com/donnol/do v0.20.2
 	github.com/iancoleman/strcase v0.2.0
 	github.com/samber/lo v1.38.1
@@ -11,7 +12,6 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
-	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
