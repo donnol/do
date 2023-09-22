@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
+	"net"
 	"os"
 	"strings"
 	"sync"
@@ -22,6 +24,44 @@ var (
 			Usage:       "letgo proxy --localAddr=':54388' --remoteAddr='127.0.0.1:54399'",
 			Description: "tcp proxy",
 			Action: func(c *cli.Context) error {
+
+				tcpProxyHandler := func(lconn, rconn net.Conn) {
+					go func() {
+						defer func() {
+							rconn.Close()
+							log.Printf("close remote conn\n")
+						}()
+
+						n, err := copyBuffer(lconn, rconn, nil)
+						if err == io.EOF {
+							log.Printf("remote conn read EOF")
+							return
+						}
+						if err != nil {
+							log.Printf("copy from remote to local failed: %v\n", err)
+							return
+						}
+						log.Printf("copy %d bytes from remote to local\n", n)
+					}()
+					go func() {
+						defer func() {
+							lconn.Close()
+							log.Printf("close local conn\n")
+						}()
+
+						n, err := copyBuffer(rconn, lconn, nil)
+						if err == io.EOF {
+							log.Printf("local conn read EOF")
+							return
+						}
+						if err != nil {
+							log.Printf("copy from local to remote failed: %v\n", err)
+							return
+						}
+						log.Printf("copy %d bytes from local to remote\n", n)
+					}()
+				}
+
 				pair := c.String("pair")
 				if pair != "" {
 					wg := new(sync.WaitGroup)
@@ -32,7 +72,7 @@ var (
 
 							parts := strings.Split(pai, "->")
 
-							if err := do.TCPProxy(parts[0], parts[1]); err != nil {
+							if err := do.TCPProxy(parts[0], parts[1], tcpProxyHandler); err != nil {
 								log.Printf("tcp proxy from %s to %s failed: %v", parts[0], parts[1], err)
 								return
 							}
@@ -42,7 +82,7 @@ var (
 
 					return nil
 				}
-				return do.TCPProxy(c.String("localAddr"), c.String("remoteAddr"))
+				return do.TCPProxy(c.String("localAddr"), c.String("remoteAddr"), tcpProxyHandler)
 			},
 			Flags: []cli.Flag{
 				&cli.StringFlag{
