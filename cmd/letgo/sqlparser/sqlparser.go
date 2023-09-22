@@ -1,6 +1,7 @@
 package sqlparser
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -98,7 +99,107 @@ const (
 	structTableNameTmpl = `
 	func ({{.StructName}}) TableName() string {
 		return "{{.TableName}}"
+	}
+	`
+
+	structColumn = `
+	func (s {{.StructName}}) Columns() []string {
+		return s.NameHelper().Columns()
+	}
+	`
+
+	helperStructHeadTmpl = `
+	type _{{.StructName}}NameHelper struct {
+	`
+	helperStructFieldTmpl = `	{{.FieldName}} string // field: {{.DBField}}
+	`
+	helperStructFootTmpl = `}`
+
+	helperMethodFuzzTmpl = `
+	// FuzzWrap make v become %v%
+	func (_{{.StructName}}NameHelper) FuzzWrap(v string) string {
+		return "%" + v + "%"
+	}
+	`
+	helperMethodColsHeaderTmpl = `
+	func (_{{.StructName}}NameHelper) Columns() []string {
+		return []string{
+	`
+	helperMethodColsBodyTmpl = `"{{.DBField}}",
+	`
+	helperMethodColsFooterTmpl = `
+			}
+		}
+	`
+
+	structHelperHeader = `
+	func ({{.StructName}}) NameHelper() _{{.StructName}}NameHelper {
+		return _{{.StructName}}NameHelper{
+	`
+	structHelperBody = `{{.FieldName}}: "{{.DBField}}",
+	`
+	structHelperFooter = `
+		}
+	}
+	`
+
+	structValuesHeader = `
+	func (s {{.StructName}}) Values() []any {
+		return []any{
+	`
+	structValuesBody = `s.{{.FieldName}},
+	`
+	structValuesFooter = `
+		}
+	}
+	`
+
+	structValuePtrsHeader = `
+	func (s *{{.StructName}}) ValuePtrs() []any {
+		return []any{
+	`
+	structValuePtrsBody = `&s.{{.FieldName}},
+	`
+	structValuePtrsFooter = `
+		}
 	}`
+
+	enumHelperHeader = `
+	type _{{.StructName}}Enum struct {
+	`
+	enumHelperBody = `{{.FieldName}} []do.Enum[{{.FieldType}}] // {{.FieldComment}}
+	`
+	enumHelperFooter = `}
+	`
+
+	enumMethodHeader = `
+	func ({{.StructName}}) EnumHelper() _{{.StructName}}Enum {
+		return _{{.StructName}}Enum{`
+	enumMethodBodyField = `
+		{{.FieldName}}: []do.Enum[{{.FieldType}}]{
+	`
+	enumMethodBodyFieldBody = `{Name: "{{.EnumName}}", Value: {{.EnumValue}} },
+	`
+	enumMethodBodyFieldFooter = `
+			},
+		`
+	enumMethodBodyFooter = `
+		}`
+	enumMethodFooter = `
+	}
+`
+
+	enumCheckHeader = `
+	var _ = func() struct{} {
+	eh := {{.StructName}}{}.EnumHelper()`
+	enumCheckBody = `
+	if eh.{{.FieldName}}[{{.EnumIndex}}].Value != {{.EnumValue}} || eh.{{.FieldName}}[{{.EnumIndex}}].Name != "{{.EnumName}}" {
+		panic("invalid enum")
+	}`
+	enumCheckFooter = `
+	return struct{}{}
+	}()
+	`
 )
 
 type Struct struct {
@@ -110,7 +211,13 @@ type Field struct {
 	Name    string
 	Type    string
 	Tag     string
+	DBField string
 	Comment string
+	Enums   []Enum
+}
+type Enum struct {
+	EnumName  string
+	EnumValue string
 }
 
 func (v *Struct) Enter(in ast.Node) (ast.Node, bool) {
@@ -126,6 +233,7 @@ func (v *Struct) Enter(in ast.Node) (ast.Node, bool) {
 			field := Field{
 				Name: col.Name.Name.O,
 			}
+			field.DBField = col.Name.Name.L
 
 			field.Type = col.Tp.InfoSchemaStr()
 			field.Type = processFieldType(field.Type)
@@ -142,6 +250,29 @@ func (v *Struct) Enter(in ast.Node) (ast.Node, bool) {
 				case ast.ColumnOptionFulltext:
 				case ast.ColumnOptionComment:
 					field.Comment = opt.Expr.(ast.ValueExpr).GetDatumString()
+					// (查找"enum("和")"之间内容，内容可以用中文或英文分号分割)
+					const bs = "enum("
+					bi := strings.Index(field.Comment, bs)
+					ei := strings.Index(field.Comment, ")")
+					if bi != -1 && ei != -1 && bi < ei {
+						es := field.Comment[bi+len(bs) : ei]
+						es = strings.ReplaceAll(es, "；", ";")
+						parts := strings.Split(es, ";")
+						for _, part := range parts {
+							if part == "" {
+								continue
+							}
+							vparts := strings.Split(part, " ")
+							if len(vparts) < 2 {
+								continue
+							}
+							field.Enums = append(field.Enums, Enum{
+								EnumName:  vparts[1],
+								EnumValue: vparts[0],
+							})
+						}
+						// fmt.Printf("%+v\n", field.Enums)
+					}
 				case ast.ColumnOptionGenerated:
 				case ast.ColumnOptionReference:
 				case ast.ColumnOptionCollate:
@@ -310,6 +441,8 @@ func (opt *Option) fillByDefault() {
 func (s *Struct) Gen(w io.Writer, opt Option) error {
 	(&opt).fillByDefault()
 
+	w.Write([]byte("import \"github.com/donnol/do\"\n"))
+
 	name := s.Name
 	if opt.StructNameMapper != nil {
 		name = opt.StructNameMapper(name)
@@ -327,6 +460,111 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 		}
 	}
 
+	hbuf := new(bytes.Buffer)
+	{
+		temp, err := template.New("structHead").Parse(helperStructHeadTmpl)
+		if err != nil {
+			return err
+		}
+		if err := temp.Execute(hbuf, map[string]any{
+			"StructName":    name,
+			"StructComment": s.Comment,
+		}); err != nil {
+			return err
+		}
+	}
+	hhbuf := new(bytes.Buffer)
+	{
+		temp, err := template.New("structHead").Parse(helperMethodColsHeaderTmpl)
+		if err != nil {
+			return err
+		}
+		if err := temp.Execute(hhbuf, map[string]any{
+			"StructName":    name,
+			"StructComment": s.Comment,
+		}); err != nil {
+			return err
+		}
+	}
+	shbuf := new(bytes.Buffer)
+	{
+		temp, err := template.New("structHead").Parse(structHelperHeader)
+		if err != nil {
+			return err
+		}
+		if err := temp.Execute(shbuf, map[string]any{
+			"StructName":    name,
+			"StructComment": s.Comment,
+		}); err != nil {
+			return err
+		}
+	}
+	svbuf := new(bytes.Buffer)
+	{
+		temp, err := template.New("structHead").Parse(structValuesHeader)
+		if err != nil {
+			return err
+		}
+		if err := temp.Execute(svbuf, map[string]any{
+			"StructName":    name,
+			"StructComment": s.Comment,
+		}); err != nil {
+			return err
+		}
+	}
+	svpbuf := new(bytes.Buffer)
+	{
+		temp, err := template.New("structHead").Parse(structValuePtrsHeader)
+		if err != nil {
+			return err
+		}
+		if err := temp.Execute(svpbuf, map[string]any{
+			"StructName":    name,
+			"StructComment": s.Comment,
+		}); err != nil {
+			return err
+		}
+	}
+	fieldEnumBuf := new(bytes.Buffer)
+	{
+		temp, err := template.New("structHead").Parse(enumHelperHeader)
+		if err != nil {
+			return err
+		}
+		if err := temp.Execute(fieldEnumBuf, map[string]any{
+			"StructName":    name,
+			"StructComment": s.Comment,
+		}); err != nil {
+			return err
+		}
+	}
+	fieldEnumMethodBuf := new(bytes.Buffer)
+	{
+		temp, err := template.New("structHead").Parse(enumMethodHeader)
+		if err != nil {
+			return err
+		}
+		if err := temp.Execute(fieldEnumMethodBuf, map[string]any{
+			"StructName":    name,
+			"StructComment": s.Comment,
+		}); err != nil {
+			return err
+		}
+	}
+	enumCheckBuf := new(bytes.Buffer)
+	{
+		temp, err := template.New("structHead").Parse(enumCheckHeader)
+		if err != nil {
+			return err
+		}
+		if err := temp.Execute(enumCheckBuf, map[string]any{
+			"StructName":    name,
+			"StructComment": s.Comment,
+		}); err != nil {
+			return err
+		}
+	}
+	haveEnum := false
 	{
 		for _, field := range s.Fields {
 			fieldName := field.Name
@@ -358,9 +596,168 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 				"FieldName":    fieldName,
 				"FieldType":    fieldType,
 				"FieldTag":     fieldTag,
+				"DBField":      field.DBField,
 				"FieldComment": field.Comment,
 			}); err != nil {
 				return err
+			}
+
+			{
+				temp, err := template.New("structField").Parse(helperStructFieldTmpl)
+				if err != nil {
+					return err
+				}
+				if err := temp.Execute(hbuf, map[string]any{
+					"FieldName":    fieldName,
+					"FieldType":    fieldType,
+					"FieldTag":     fieldTag,
+					"DBField":      field.DBField,
+					"FieldComment": field.Comment,
+				}); err != nil {
+					return err
+				}
+			}
+			{
+				temp, err := template.New("structField").Parse(structHelperBody)
+				if err != nil {
+					return err
+				}
+				if err := temp.Execute(shbuf, map[string]any{
+					"FieldName":    fieldName,
+					"FieldType":    fieldType,
+					"FieldTag":     fieldTag,
+					"DBField":      field.DBField,
+					"FieldComment": field.Comment,
+				}); err != nil {
+					return err
+				}
+			}
+			{
+				temp, err := template.New("structField").Parse(structValuesBody)
+				if err != nil {
+					return err
+				}
+				if err := temp.Execute(svbuf, map[string]any{
+					"FieldName":    fieldName,
+					"FieldType":    fieldType,
+					"FieldTag":     fieldTag,
+					"DBField":      field.DBField,
+					"FieldComment": field.Comment,
+				}); err != nil {
+					return err
+				}
+			}
+			{
+				temp, err := template.New("structField").Parse(structValuePtrsBody)
+				if err != nil {
+					return err
+				}
+				if err := temp.Execute(svpbuf, map[string]any{
+					"FieldName":    fieldName,
+					"FieldType":    fieldType,
+					"FieldTag":     fieldTag,
+					"DBField":      field.DBField,
+					"FieldComment": field.Comment,
+				}); err != nil {
+					return err
+				}
+			}
+
+			{
+				temp, err := template.New("structField").Parse(helperMethodColsBodyTmpl)
+				if err != nil {
+					return err
+				}
+				if err := temp.Execute(hhbuf, map[string]any{
+					"FieldName":    fieldName,
+					"FieldType":    fieldType,
+					"FieldTag":     fieldTag,
+					"DBField":      field.DBField,
+					"FieldComment": field.Comment,
+				}); err != nil {
+					return err
+				}
+			}
+			// enumCheckHeader
+			// enumCheckBody
+			// enumCheckFooter
+			if len(field.Enums) > 0 {
+				haveEnum = true
+				{
+					temp, err := template.New("structField").Parse(enumHelperBody)
+					if err != nil {
+						return err
+					}
+					if err := temp.Execute(fieldEnumBuf, map[string]any{
+						"FieldName":    fieldName,
+						"FieldType":    fieldType,
+						"FieldTag":     fieldTag,
+						"DBField":      field.DBField,
+						"FieldComment": field.Comment,
+					}); err != nil {
+						return err
+					}
+				}
+				{
+					temp, err := template.New("structField").Parse(enumMethodBodyField)
+					if err != nil {
+						return err
+					}
+					if err := temp.Execute(fieldEnumMethodBuf, map[string]any{
+						"FieldName":    fieldName,
+						"FieldType":    fieldType,
+						"FieldTag":     fieldTag,
+						"DBField":      field.DBField,
+						"FieldComment": field.Comment,
+					}); err != nil {
+						return err
+					}
+				}
+				for i, e := range field.Enums {
+					ev := e.EnumValue
+					if fieldType == "string" {
+						ev = fmt.Sprintf("%q", ev)
+					} else {
+						_, err1 := strconv.ParseInt(ev, 10, 64)
+						_, err2 := strconv.ParseUint(ev, 10, 64)
+						if err1 != nil && err2 != nil {
+							ev = fmt.Sprintf("%q", ev)
+						}
+					}
+					{
+						temp, err := template.New("structField").Parse(enumMethodBodyFieldBody)
+						if err != nil {
+							return err
+						}
+
+						if err := temp.Execute(fieldEnumMethodBuf, map[string]any{
+							"EnumName":  e.EnumName,
+							"EnumValue": ev,
+						}); err != nil {
+							return err
+						}
+					}
+					{
+						temp, err := template.New("structField").Parse(enumCheckBody)
+						if err != nil {
+							return err
+						}
+						if err := temp.Execute(enumCheckBuf, map[string]any{
+							"FieldName": fieldName,
+							"EnumName":  e.EnumName,
+							"EnumValue": ev,
+							"EnumIndex": i,
+						}); err != nil {
+							return err
+						}
+					}
+				}
+
+				{
+					if _, err := fieldEnumMethodBuf.Write([]byte(enumMethodBodyFieldFooter)); err != nil {
+						return err
+					}
+				}
 			}
 		}
 	}
@@ -370,7 +767,52 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 			return err
 		}
 	}
+	{
+		if _, err := hbuf.Write([]byte(helperStructFootTmpl)); err != nil {
+			return err
+		}
+	}
+	{
+		if _, err := shbuf.Write([]byte(structHelperFooter)); err != nil {
+			return err
+		}
+	}
+	{
+		if _, err := svbuf.Write([]byte(structValuesFooter)); err != nil {
+			return err
+		}
+	}
+	{
+		if _, err := svpbuf.Write([]byte(structValuePtrsFooter)); err != nil {
+			return err
+		}
+	}
+	{
+		if _, err := hhbuf.Write([]byte(helperMethodColsFooterTmpl)); err != nil {
+			return err
+		}
+	}
 
+	{
+		if _, err := fieldEnumMethodBuf.Write([]byte(enumMethodBodyFooter)); err != nil {
+			return err
+		}
+	}
+	{
+		if _, err := fieldEnumMethodBuf.Write([]byte(enumMethodFooter)); err != nil {
+			return err
+		}
+	}
+	{
+		if _, err := fieldEnumBuf.Write([]byte(enumHelperFooter)); err != nil {
+			return err
+		}
+	}
+	{
+		if _, err := enumCheckBuf.Write([]byte(enumCheckFooter)); err != nil {
+			return err
+		}
+	}
 	{
 		temp, err := template.New("structTableName").Parse(structTableNameTmpl)
 		if err != nil {
@@ -383,10 +825,71 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 			return err
 		}
 	}
-	return nil
-}
+	{
+		// structColumn
+		temp, err := template.New("structColumn").Parse(structColumn)
+		if err != nil {
+			return err
+		}
+		if err := temp.Execute(w, map[string]any{
+			"StructName": name,
+			"TableName":  s.Name,
+		}); err != nil {
+			return err
+		}
+	}
+	{
+		if _, err := w.Write(svbuf.Bytes()); err != nil {
+			return err
+		}
+	}
+	{
+		if _, err := w.Write(svpbuf.Bytes()); err != nil {
+			return err
+		}
+	}
 
-func (s *Struct) GenCRUD(w io.Writer, opt Option) error {
+	{
+		if _, err := w.Write(hbuf.Bytes()); err != nil {
+			return err
+		}
+	}
+	{
+		// helperMethodFuzzTmpl
+		temp, err := template.New("structHead").Parse(helperMethodFuzzTmpl)
+		if err != nil {
+			return err
+		}
+		if err := temp.Execute(w, map[string]any{
+			"StructName":    name,
+			"StructComment": s.Comment,
+		}); err != nil {
+			return err
+		}
+	}
+	{
+		if _, err := w.Write(hhbuf.Bytes()); err != nil {
+			return err
+		}
+	}
+	{
+		if _, err := w.Write(shbuf.Bytes()); err != nil {
+			return err
+		}
+	}
+
+	if haveEnum {
+		if _, err := w.Write(fieldEnumBuf.Bytes()); err != nil {
+			return err
+		}
+		if _, err := w.Write(fieldEnumMethodBuf.Bytes()); err != nil {
+			return err
+		}
+		if _, err := w.Write(enumCheckBuf.Bytes()); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
