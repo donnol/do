@@ -185,11 +185,26 @@ var (
 						os.Exit(1)
 					}
 				}
+				haveEnum := false
+				body := new(bytes.Buffer)
 				for _, s := range ss {
-					if err := s.Gen(buf, opt); err != nil {
+					if err := s.Gen(body, opt); err != nil {
 						fmt.Printf("gen struct failed: %v\n", err)
 						os.Exit(1)
 					}
+					if s.HaveEnum {
+						haveEnum = true
+					}
+				}
+				if haveEnum {
+					if _, err := buf.Write([]byte("\nimport \"github.com/donnol/do\"\n")); err != nil {
+						return err
+					}
+				}
+				_, err := buf.Write(body.Bytes())
+				if err != nil {
+					fmt.Printf("write body failed: %v\n", err)
+					os.Exit(1)
 				}
 				content, err := parser.Format(output, buf.String(), false)
 				if err != nil {

@@ -138,7 +138,7 @@ func TestStruct_Gen(t *testing.T) {
 			args: args{
 				opt: Option{},
 			},
-			wantW: "import \"github.com/donnol/do\"\n\n" +
+			wantW: "\n" +
 				"	// UserTable 用户表" + "\n" +
 				"	type UserTable struct {" + "\n" +
 				"		Id uint64 `json:\"id\" db:\"id\"` // 主键id" + "\n" +
@@ -257,7 +257,7 @@ updated_at timestamp not null comment '更新时间'
 					{Name: "updated_at", DBField: "updated_at", Type: "timestamp", Tag: "", Comment: "更新时间"},
 				},
 			},
-			wantW: "import \"github.com/donnol/do\"\n\n" +
+			wantW: "\n" +
 				"	// User 用户表" + "\n" +
 				"	type User struct {" + "\n" +
 				"		Id uint `json:\"id\" db:\"id\"` // id" + "\n" +
@@ -347,7 +347,7 @@ updated_at timestamp not null comment '更新时间'
 					{Name: "updated_at", DBField: "updated_at", Type: "timestamp", Tag: "", Comment: "更新时间"},
 				},
 			},
-			wantW: "import \"github.com/donnol/do\"\n\n" +
+			wantW: "\n" +
 				"	// User 用户表" + "\n" +
 				"	type User struct {" + "\n" +
 				"		Id uint `json:\"id\" db:\"id\"` // id" + "\n" +

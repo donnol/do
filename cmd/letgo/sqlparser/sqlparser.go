@@ -206,6 +206,8 @@ type Struct struct {
 	Name    string
 	Comment string
 	Fields  []Field
+
+	HaveEnum bool
 }
 type Field struct {
 	Name    string
@@ -440,8 +442,6 @@ func (opt *Option) fillByDefault() {
 
 func (s *Struct) Gen(w io.Writer, opt Option) error {
 	(&opt).fillByDefault()
-
-	w.Write([]byte("import \"github.com/donnol/do\"\n"))
 
 	name := s.Name
 	if opt.StructNameMapper != nil {
@@ -683,6 +683,7 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 			// enumCheckFooter
 			if len(field.Enums) > 0 {
 				haveEnum = true
+				s.HaveEnum = haveEnum
 				{
 					temp, err := template.New("structField").Parse(enumHelperBody)
 					if err != nil {
