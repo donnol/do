@@ -58,6 +58,36 @@ func WrapTx(
 	return
 }
 
+func WrapTxV[R any](
+	ctx context.Context,
+	db *sql.DB,
+	f func(
+		ctx context.Context,
+		tx *sql.Tx,
+	) (R, error),
+) (r R, err error) {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return
+	}
+	var success bool
+	defer func() {
+		if !success {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
+
+	r, err = f(ctx, tx)
+	if err != nil {
+		return
+	}
+	success = true
+
+	return
+}
+
 func WrapSQLConn(
 	ctx context.Context,
 	db *sql.DB,

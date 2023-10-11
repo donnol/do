@@ -1,8 +1,10 @@
 package do
 
 import (
+	"context"
 	"database/sql"
 	"path/filepath"
+	"testing"
 
 	"github.com/donnol/do"
 	"gorm.io/driver/sqlite"
@@ -33,3 +35,34 @@ var (
 		return sqldb
 	}()
 )
+
+func TestWrapTxV(t *testing.T) {
+	ctx := context.Background()
+	r, err := do.WrapTxV[UserForDB](ctx, tdb, func(ctx context.Context, tx *sql.Tx) (UserForDB, error) {
+
+		// 只拿id列
+		finder := &finderOfUserOnlyId{
+			id: 1,
+		}
+		var r UserForDB
+		do.Must(do.FindFirst(tx, finder, &r))
+		if r.Id != 1 {
+			t.Errorf("bad case of id, %v != %v", r.Id, 1)
+		}
+		if r.Name != "" {
+			t.Errorf("bad case of name, %v != %v", r.Name, "")
+		}
+
+		return r, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if r.Id != 1 {
+		t.Errorf("bad case of id, %v != %v", r.Id, 1)
+	}
+	if r.Name != "" {
+		t.Errorf("bad case of name, %v != %v", r.Name, "")
+	}
+}
