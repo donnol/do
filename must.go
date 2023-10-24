@@ -113,3 +113,28 @@ func logError(err error) {
 		log.Println(NewError(efrom(err)))
 	}
 }
+
+// Ignore1 ignore the last variable，and continue with 1 result
+func Ignore1[T1, T2 any](a1 T1, i T2) T1 {
+	return a1
+}
+
+// Ignore2 ignore the last variable，and continue with 2 result
+func Ignore2[T1, T2, T3 any](a1 T1, a2 T2, i T3) (T1, T2) {
+	return a1, a2
+}
+
+// Ignore3 ignore the last variable，and continue with 3 result
+func Ignore3[T1, T2, T3, T4 any](a1 T1, a2 T2, a3 T3, i T4) (T1, T2, T3) {
+	return a1, a2, a3
+}
+
+// Ignore4 ignore the last variable，and continue with 4 result
+func Ignore4[T1, T2, T3, T4, T5 any](a1 T1, a2 T2, a3 T3, a4 T4, i T5) (T1, T2, T3, T4) {
+	return a1, a2, a3, a4
+}
+
+// Ignore5 ignore the last variable，and continue with 5 result
+func Ignore5[T1, T2, T3, T4, T5, T6 any](a1 T1, a2 T2, a3 T3, a4 T4, a5 T5, i T6) (T1, T2, T3, T4, T5) {
+	return a1, a2, a3, a4, a5
+}

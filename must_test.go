@@ -202,3 +202,12 @@ func TestLog1(t *testing.T) {
 		})
 	}
 }
+
+func TestIgnore(t *testing.T) {
+	r := do.Ignore1(1, "2")
+	do.Assert(t, r, 1)
+
+	r1, r2 := do.Ignore2(1, "2", 4.0)
+	do.Assert(t, r1, 1)
+	do.Assert(t, r2, "2")
+}
