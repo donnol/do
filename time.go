@@ -2,6 +2,15 @@ package do
 
 import "time"
 
+const (
+	DateTimeFormat = "2006-01-02 15:04:05"
+	DateFormat     = "2006-01-02"
+)
+
+var (
+	Location = time.FixedZone("CST", 8*3600) // 东八，Asia/Shanghai
+)
+
 // IsExpired show if deadline is expired compared to now
 // always return false if deadline is zero
 func IsExpired(deadline, now time.Time) bool {
