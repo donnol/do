@@ -3,7 +3,9 @@ package sqlparser
 import (
 	"bytes"
 	"reflect"
+	"strconv"
 	"testing"
+	"text/template"
 
 	"github.com/andreyvit/diff"
 
@@ -650,4 +652,108 @@ func Test_processFieldType(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestStruct(t *testing.T) {
+	tp, err := template.New("test").Parse(enumTmpl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	buf := new(bytes.Buffer)
+	err = tp.Execute(buf, StructForTmpl{
+		StructName: "User",
+		Fields: []StructField{
+			{
+				FieldName:    "Id",
+				FieldType:    "uint64",
+				FieldComment: "// id",
+			},
+			{
+				FieldName:    "Status",
+				FieldType:    "int",
+				FieldComment: "状态: enum(0 未知;1 有效;2 无效)",
+			},
+			{
+				FieldName:    "Type",
+				FieldType:    "string",
+				FieldComment: "类型: enum(admin 管理员;user 用户)",
+			},
+		},
+		EnumFields: []EnumFields{
+			{
+				StructField: StructField{
+					FieldName:    "Status",
+					FieldType:    "int",
+					FieldComment: "状态: enum(0 未知;1 有效;2 无效)",
+				},
+				EnumFieldValues: []EnumFieldValue{
+					{
+						StructField: StructField{
+							FieldName:    "Status",
+							FieldType:    "int",
+							FieldComment: "状态: enum(0 未知;1 有效;2 无效)",
+						},
+						EnumName:         "未知",
+						EnumValue:        "0",
+						EnumValueProcess: "0",
+					},
+					{
+						StructField: StructField{
+							FieldName:    "Status",
+							FieldType:    "int",
+							FieldComment: "状态: enum(0 未知;1 有效;2 无效)",
+						},
+						EnumName:         "有效",
+						EnumValue:        "1",
+						EnumValueProcess: "1",
+					},
+					{
+						StructField: StructField{
+							FieldName:    "Status",
+							FieldType:    "int",
+							FieldComment: "状态: enum(0 未知;1 有效;2 无效)",
+						},
+						EnumName:         "无效",
+						EnumValue:        "2",
+						EnumValueProcess: "2",
+					},
+				},
+			},
+			{
+				StructField: StructField{
+					FieldName:    "Type",
+					FieldType:    "string",
+					FieldComment: "类型: enum(admin 管理员;user 用户)",
+				},
+				EnumFieldValues: []EnumFieldValue{
+					{
+						StructField: StructField{
+							FieldName:    "Type",
+							FieldType:    "string",
+							FieldComment: "类型: enum(admin 管理员;user 用户)",
+						},
+						EnumName:         "管理员",
+						EnumValue:        "admin",
+						EnumValueProcess: strconv.Quote("admin"),
+					},
+					{
+						StructField: StructField{
+							FieldName:    "Type",
+							FieldType:    "string",
+							FieldComment: "类型: enum(admin 管理员;user 用户)",
+						},
+						EnumName:         "用户",
+						EnumValue:        "user",
+						EnumValueProcess: strconv.Quote("user"),
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(buf.String())
+
 }
