@@ -19,6 +19,19 @@ import (
 	"github.com/samber/lo"
 )
 
+type (
+	ParseOption struct {
+		tablePrefix string
+	}
+	ParseSetter func(*ParseOption)
+)
+
+func WithTablePrefix(tablePrefix string) ParseSetter {
+	return func(po *ParseOption) {
+		po.tablePrefix = tablePrefix
+	}
+}
+
 func ParseCreateSQL(sql string) *Struct {
 	s := &Struct{}
 
@@ -42,7 +55,12 @@ func parse(sql string) (*ast.StmtNode, error) {
 	return &stmtNodes, nil
 }
 
-func ParseCreateSQLBatch(sql string) []*Struct {
+func ParseCreateSQLBatch(sql string, opts ...ParseSetter) []*Struct {
+	opt := &ParseOption{}
+	for _, setter := range opts {
+		setter(opt)
+	}
+
 	r := make([]*Struct, 0)
 
 	nodes, err := parseBatch(sql)
@@ -50,7 +68,9 @@ func ParseCreateSQLBatch(sql string) []*Struct {
 		log.Fatal(err)
 	}
 	for _, node := range nodes {
-		s := &Struct{}
+		s := &Struct{
+			tablePrefix: opt.tablePrefix,
+		}
 		node.Accept(s)
 		r = append(r, s)
 	}
@@ -166,6 +186,8 @@ const (
 )
 
 type Struct struct {
+	tablePrefix string
+
 	Name    string
 	Comment string
 	Fields  []Field
@@ -271,6 +293,7 @@ type Option struct {
 	FieldTypeMapper        func(string) string         // 字段类型映射
 	FieldTagMapper         func(string, string) string // 可根据名称和类型自行决定字段tag
 	RandomFieldValueByType func(string) any            // 根据字段类型生成随机值
+	TrimTablePrefix        string                      // 表名前缀，若有则在转为结构体名前去掉
 }
 
 var (
@@ -407,6 +430,10 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 	(&opt).fillByDefault()
 
 	name := s.Name
+	// 去掉前缀
+	if opt.TrimTablePrefix != "" {
+		name = strings.TrimPrefix(name, opt.TrimTablePrefix)
+	}
 	if opt.StructNameMapper != nil {
 		name = opt.StructNameMapper(name)
 	}

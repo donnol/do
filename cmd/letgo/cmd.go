@@ -130,6 +130,13 @@ var (
 					Value:       "",
 					Usage:       "specify package name",
 				},
+				&cli.StringFlag{
+					Name:        "tablePrefix",
+					Aliases:     []string{"tp"},
+					DefaultText: "",
+					Value:       "",
+					Usage:       "specify table prefix, trim it when convert to struct name",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				// 标志
@@ -137,6 +144,7 @@ var (
 				file := c.String("file")
 				output := c.String("output")
 				pkg := c.String("pkg")
+				tp := c.String("tablePrefix")
 
 				sql := ""
 				if len(c.Args().Slice()) > 0 {
@@ -159,6 +167,9 @@ var (
 				if ignoreField != "" {
 					opt.IgnoreField = append(opt.IgnoreField, ignoreField)
 				}
+				if tp != "" {
+					opt.TrimTablePrefix = tp
+				}
 
 				ss := sqlparser.ParseCreateSQLBatch(sql)
 				if ss == nil {
@@ -177,14 +188,16 @@ var (
 
 					w = f
 				}
+
 				buf := new(bytes.Buffer)
-				if pkg != "" {
-					_, err := buf.WriteString("package " + pkg)
-					if err != nil {
-						fmt.Printf("write package name failed: %v\n", err)
-						os.Exit(1)
-					}
+				if pkg == "" {
+					pkg = "main"
 				}
+				if _, err := buf.WriteString("package " + pkg); err != nil {
+					fmt.Printf("write package name failed: %v\n", err)
+					os.Exit(1)
+				}
+
 				haveEnum := false
 				body := new(bytes.Buffer)
 				for _, s := range ss {
