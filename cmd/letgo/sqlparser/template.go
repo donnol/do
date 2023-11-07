@@ -6,7 +6,7 @@ type _{{.StructName}}Enum struct {
 	{{range $key,$value := .EnumFields}}
 		{{$value.FieldName}} struct {
 		{{range $ikey,$ivalue := $value.EnumFieldValues}} 
-			E_{{$ivalue.EnumValue}} do.Enum[{{$ivalue.FieldType}}] 	{{end}}
+			E_{{$ivalue.EnumValue}} do.Enum[{{$ivalue.FieldType}}] // {{$ivalue.EnumComment}} 	{{end}}
 	} // {{$value.FieldComment}}	{{end}}
 }
 
@@ -55,4 +55,5 @@ type EnumFieldValue struct {
 	EnumName         string
 	EnumValue        string
 	EnumValueProcess string // 如果是字符串类型，需要在EnumValue基础上添加双引号
+	EnumComment      string
 }

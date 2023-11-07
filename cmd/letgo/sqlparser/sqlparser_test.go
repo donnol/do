@@ -697,6 +697,7 @@ func TestStruct(t *testing.T) {
 						EnumName:         "未知",
 						EnumValue:        "0",
 						EnumValueProcess: "0",
+						EnumComment:      "0 未知",
 					},
 					{
 						StructField: StructField{
@@ -707,6 +708,7 @@ func TestStruct(t *testing.T) {
 						EnumName:         "有效",
 						EnumValue:        "1",
 						EnumValueProcess: "1",
+						EnumComment:      "1 有效",
 					},
 					{
 						StructField: StructField{
@@ -717,6 +719,7 @@ func TestStruct(t *testing.T) {
 						EnumName:         "无效",
 						EnumValue:        "2",
 						EnumValueProcess: "2",
+						EnumComment:      "2 无效",
 					},
 				},
 			},
@@ -736,6 +739,7 @@ func TestStruct(t *testing.T) {
 						EnumName:         "管理员",
 						EnumValue:        "admin",
 						EnumValueProcess: strconv.Quote("admin"),
+						EnumComment:      "admin 管理员",
 					},
 					{
 						StructField: StructField{
@@ -746,6 +750,7 @@ func TestStruct(t *testing.T) {
 						EnumName:         "用户",
 						EnumValue:        "user",
 						EnumValueProcess: strconv.Quote("user"),
+						EnumComment:      "user 用户",
 					},
 				},
 			},
@@ -760,14 +765,14 @@ func TestStruct(t *testing.T) {
 
 		Status struct {
 
-			E_0 do.Enum[int]
-			E_1 do.Enum[int]
-			E_2 do.Enum[int]
+			E_0 do.Enum[int] // 0 未知
+			E_1 do.Enum[int] // 1 有效
+			E_2 do.Enum[int] // 2 无效
 	} // 状态: enum(0 未知;1 有效;2 无效)
 		Type struct {
 
-			E_admin do.Enum[string]
-			E_user do.Enum[string]
+			E_admin do.Enum[string] // admin 管理员
+			E_user do.Enum[string] // user 用户
 	} // 类型: enum(admin 管理员;user 用户)
 }
 

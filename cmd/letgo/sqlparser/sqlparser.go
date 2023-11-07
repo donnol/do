@@ -526,8 +526,8 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 				FieldName:    fieldName,
 				FieldType:    fieldType,
 				FieldTag:     fieldTag,
-				FieldComment: field.DBField,
-				DBField:      field.Comment,
+				FieldComment: field.Comment,
+				DBField:      field.DBField,
 			}
 			structTmpl.Fields = append(structTmpl.Fields, structField)
 
@@ -643,6 +643,7 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 						EnumName:         e.EnumName,
 						EnumValue:        e.EnumValue,
 						EnumValueProcess: ev,
+						EnumComment:      e.EnumValue + " " + e.EnumName,
 					}
 					fieldEnum.EnumFieldValues = append(fieldEnum.EnumFieldValues, efv)
 				}
