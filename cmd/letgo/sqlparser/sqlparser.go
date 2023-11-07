@@ -163,43 +163,6 @@ const (
 	structValuePtrsFooter = `
 		}
 	}`
-
-	enumHelperHeader = `
-	type _{{.StructName}}Enum struct {
-	`
-	enumHelperBody = `{{.FieldName}} []do.Enum[{{.FieldType}}] // {{.FieldComment}}
-	`
-	enumHelperFooter = `}
-	`
-
-	enumMethodHeader = `
-	func ({{.StructName}}) EnumHelper() _{{.StructName}}Enum {
-		return _{{.StructName}}Enum{`
-	enumMethodBodyField = `
-		{{.FieldName}}: []do.Enum[{{.FieldType}}]{
-	`
-	enumMethodBodyFieldBody = `{Name: "{{.EnumName}}", Value: {{.EnumValue}} },
-	`
-	enumMethodBodyFieldFooter = `
-			},
-		`
-	enumMethodBodyFooter = `
-		}`
-	enumMethodFooter = `
-	}
-`
-
-	enumCheckHeader = `
-	var _ = func() struct{} {
-	eh := {{.StructName}}{}.EnumHelper()`
-	enumCheckBody = `
-	if eh.{{.FieldName}}[{{.EnumIndex}}].Value != {{.EnumValue}} || eh.{{.FieldName}}[{{.EnumIndex}}].Name != "{{.EnumName}}" {
-		panic("invalid enum")
-	}`
-	enumCheckFooter = `
-	return struct{}{}
-	}()
-	`
 )
 
 type Struct struct {
@@ -525,46 +488,12 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 			return err
 		}
 	}
-	fieldEnumBuf := new(bytes.Buffer)
-	{
-		temp, err := template.New("structHead").Parse(enumHelperHeader)
-		if err != nil {
-			return err
-		}
-		if err := temp.Execute(fieldEnumBuf, map[string]any{
-			"StructName":    name,
-			"StructComment": s.Comment,
-		}); err != nil {
-			return err
-		}
-	}
-	fieldEnumMethodBuf := new(bytes.Buffer)
-	{
-		temp, err := template.New("structHead").Parse(enumMethodHeader)
-		if err != nil {
-			return err
-		}
-		if err := temp.Execute(fieldEnumMethodBuf, map[string]any{
-			"StructName":    name,
-			"StructComment": s.Comment,
-		}); err != nil {
-			return err
-		}
-	}
-	enumCheckBuf := new(bytes.Buffer)
-	{
-		temp, err := template.New("structHead").Parse(enumCheckHeader)
-		if err != nil {
-			return err
-		}
-		if err := temp.Execute(enumCheckBuf, map[string]any{
-			"StructName":    name,
-			"StructComment": s.Comment,
-		}); err != nil {
-			return err
-		}
-	}
+
 	haveEnum := false
+	structTmpl := StructForTmpl{
+		StructName:    name,
+		StructComment: s.Comment,
+	}
 	{
 		for _, field := range s.Fields {
 			fieldName := field.Name
@@ -592,6 +521,16 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 			if err != nil {
 				return err
 			}
+
+			structField := StructField{
+				FieldName:    fieldName,
+				FieldType:    fieldType,
+				FieldTag:     fieldTag,
+				FieldComment: field.DBField,
+				DBField:      field.Comment,
+			}
+			structTmpl.Fields = append(structTmpl.Fields, structField)
+
 			if err := temp.Execute(w, map[string]any{
 				"FieldName":    fieldName,
 				"FieldType":    fieldType,
@@ -684,37 +623,11 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 			if len(field.Enums) > 0 {
 				haveEnum = true
 				s.HaveEnum = haveEnum
-				{
-					temp, err := template.New("structField").Parse(enumHelperBody)
-					if err != nil {
-						return err
-					}
-					if err := temp.Execute(fieldEnumBuf, map[string]any{
-						"FieldName":    fieldName,
-						"FieldType":    fieldType,
-						"FieldTag":     fieldTag,
-						"DBField":      field.DBField,
-						"FieldComment": field.Comment,
-					}); err != nil {
-						return err
-					}
+
+				fieldEnum := EnumField{
+					StructField: structField,
 				}
-				{
-					temp, err := template.New("structField").Parse(enumMethodBodyField)
-					if err != nil {
-						return err
-					}
-					if err := temp.Execute(fieldEnumMethodBuf, map[string]any{
-						"FieldName":    fieldName,
-						"FieldType":    fieldType,
-						"FieldTag":     fieldTag,
-						"DBField":      field.DBField,
-						"FieldComment": field.Comment,
-					}); err != nil {
-						return err
-					}
-				}
-				for i, e := range field.Enums {
+				for _, e := range field.Enums {
 					ev := e.EnumValue
 					if fieldType == "string" {
 						ev = fmt.Sprintf("%q", ev)
@@ -725,40 +638,15 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 							ev = fmt.Sprintf("%q", ev)
 						}
 					}
-					{
-						temp, err := template.New("structField").Parse(enumMethodBodyFieldBody)
-						if err != nil {
-							return err
-						}
-
-						if err := temp.Execute(fieldEnumMethodBuf, map[string]any{
-							"EnumName":  e.EnumName,
-							"EnumValue": ev,
-						}); err != nil {
-							return err
-						}
+					efv := EnumFieldValue{
+						StructField:      structField,
+						EnumName:         e.EnumName,
+						EnumValue:        e.EnumValue,
+						EnumValueProcess: ev,
 					}
-					{
-						temp, err := template.New("structField").Parse(enumCheckBody)
-						if err != nil {
-							return err
-						}
-						if err := temp.Execute(enumCheckBuf, map[string]any{
-							"FieldName": fieldName,
-							"EnumName":  e.EnumName,
-							"EnumValue": ev,
-							"EnumIndex": i,
-						}); err != nil {
-							return err
-						}
-					}
+					fieldEnum.EnumFieldValues = append(fieldEnum.EnumFieldValues, efv)
 				}
-
-				{
-					if _, err := fieldEnumMethodBuf.Write([]byte(enumMethodBodyFieldFooter)); err != nil {
-						return err
-					}
-				}
+				structTmpl.EnumFields = append(structTmpl.EnumFields, fieldEnum)
 			}
 		}
 	}
@@ -794,26 +682,6 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 		}
 	}
 
-	{
-		if _, err := fieldEnumMethodBuf.Write([]byte(enumMethodBodyFooter)); err != nil {
-			return err
-		}
-	}
-	{
-		if _, err := fieldEnumMethodBuf.Write([]byte(enumMethodFooter)); err != nil {
-			return err
-		}
-	}
-	{
-		if _, err := fieldEnumBuf.Write([]byte(enumHelperFooter)); err != nil {
-			return err
-		}
-	}
-	{
-		if _, err := enumCheckBuf.Write([]byte(enumCheckFooter)); err != nil {
-			return err
-		}
-	}
 	{
 		temp, err := template.New("structTableName").Parse(structTableNameTmpl)
 		if err != nil {
@@ -880,13 +748,16 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 	}
 
 	if haveEnum {
-		if _, err := w.Write(fieldEnumBuf.Bytes()); err != nil {
+		tp, err := template.New("test").Parse(enumTmpl)
+		if err != nil {
 			return err
 		}
-		if _, err := w.Write(fieldEnumMethodBuf.Bytes()); err != nil {
+		enumBuf := new(bytes.Buffer)
+		err = tp.Execute(enumBuf, structTmpl)
+		if err != nil {
 			return err
 		}
-		if _, err := w.Write(enumCheckBuf.Bytes()); err != nil {
+		if _, err := w.Write(enumBuf.Bytes()); err != nil {
 			return err
 		}
 	}

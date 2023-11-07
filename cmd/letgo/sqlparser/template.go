@@ -31,18 +31,21 @@ var _ = func() struct{} {
 )
 
 type StructForTmpl struct {
-	StructName string
-	Fields     []StructField
-	EnumFields []EnumFields
+	StructName    string
+	StructComment string
+	Fields        []StructField
+	EnumFields    []EnumField
 }
 
 type StructField struct {
 	FieldName    string
 	FieldType    string
+	FieldTag     string
 	FieldComment string
+	DBField      string
 }
 
-type EnumFields struct {
+type EnumField struct {
 	StructField
 	EnumFieldValues []EnumFieldValue
 }

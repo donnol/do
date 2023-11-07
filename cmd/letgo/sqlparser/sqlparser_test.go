@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/andreyvit/diff"
+	"github.com/donnol/do"
 
 	_ "github.com/pingcap/tidb/types/parser_driver"
 )
@@ -679,7 +680,7 @@ func TestStruct(t *testing.T) {
 				FieldComment: "类型: enum(admin 管理员;user 用户)",
 			},
 		},
-		EnumFields: []EnumFields{
+		EnumFields: []EnumField{
 			{
 				StructField: StructField{
 					FieldName:    "Status",
@@ -754,6 +755,56 @@ func TestStruct(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log(buf.String())
+	// t.Log(buf.String())
+	want := `type _UserEnum struct {
 
+		Status struct {
+
+			E_0 do.Enum[int]
+			E_1 do.Enum[int]
+			E_2 do.Enum[int]
+	} // 状态: enum(0 未知;1 有效;2 无效)
+		Type struct {
+
+			E_admin do.Enum[string]
+			E_user do.Enum[string]
+	} // 类型: enum(admin 管理员;user 用户)
+}
+
+func (User) EnumHelper() _UserEnum {
+	e := _UserEnum{}
+
+
+			e.Status.E_0 = do.Enum[int]{Name: "未知", Value: 0}
+			e.Status.E_1 = do.Enum[int]{Name: "有效", Value: 1}
+			e.Status.E_2 = do.Enum[int]{Name: "无效", Value: 2}
+
+			e.Type.E_admin = do.Enum[string]{Name: "管理员", Value: "admin"}
+			e.Type.E_user = do.Enum[string]{Name: "用户", Value: "user"}
+	return e
+}
+
+var _ = func() struct{} {
+	e := User{}.EnumHelper()
+
+
+			if e.Status.E_0.Value != 0 || e.Status.E_0.Name != "未知" {
+				panic("invalid enum")
+			}
+			if e.Status.E_1.Value != 1 || e.Status.E_1.Name != "有效" {
+				panic("invalid enum")
+			}
+			if e.Status.E_2.Value != 2 || e.Status.E_2.Name != "无效" {
+				panic("invalid enum")
+			}
+
+			if e.Type.E_admin.Value != "admin" || e.Type.E_admin.Name != "管理员" {
+				panic("invalid enum")
+			}
+			if e.Type.E_user.Value != "user" || e.Type.E_user.Name != "用户" {
+				panic("invalid enum")
+			}
+	return struct{}{}
+}`
+	do.Assert(t, diff.TrimLinesInString(buf.String()), diff.TrimLinesInString(want), diff.LineDiff(buf.String(), want))
 }
