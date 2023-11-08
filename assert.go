@@ -14,6 +14,19 @@ func Assert[T comparable](handler AssertHandler, l, r T, msgAndArgs ...any) {
 	handler.Errorf("Bad case, %v != %v, %s", l, r, messageFromMsgAndArgs(msgAndArgs...))
 }
 
+func AssertSlice[T comparable](handler AssertHandler, lslice, rslice []T, msgAndArgs ...any) {
+	ll, rl := len(lslice), len(rslice)
+	if ll != rl {
+		handler.Errorf("Bad case, left length(%d) != right length(%d)", ll, rl)
+	}
+
+	for i := 0; i < ll; i++ {
+		if !Equal(lslice[i], rslice[i]) {
+			handler.Errorf("Bad case, No.%d: %v != %v, %s", i, lslice[i], rslice[i], messageFromMsgAndArgs(msgAndArgs...))
+		}
+	}
+}
+
 func messageFromMsgAndArgs(msgAndArgs ...any) string {
 	if len(msgAndArgs) == 0 || msgAndArgs == nil {
 		return ""
