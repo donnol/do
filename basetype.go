@@ -8,10 +8,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Pager struct {
-	Page     int `json:"page"`     // page No.
-	PageSize int `json:"pageSize"` // page size
-}
+type (
+	Pager struct {
+		Page     int `json:"page"`     // page No.
+		PageSize int `json:"pageSize"` // page size
+	}
+	PageResult[T any] struct {
+		Total int64 `json:"total"` // total
+		List  []T   `json:"list"`  // list
+	}
+)
 
 // Id to/from string when json encode/decode
 type Id uint64
