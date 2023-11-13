@@ -19,6 +19,12 @@ type (
 	}
 )
 
+type (
+	IdType[T any] struct {
+		Id T `json:"id" form:"id"` // id
+	}
+)
+
 // Id to/from string when json encode/decode
 type Id uint64
 
