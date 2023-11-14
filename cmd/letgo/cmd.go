@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -234,5 +235,175 @@ var (
 				return nil
 			},
 		},
+		{
+			Name:  "mock",
+			Usage: `letgo mock -p=github.com/xxx/yyy -r`,
+			Description: `gen interface mock struct, like: type I interface { String() string }, 
+			gen mock: 
+				type Mock struct { StringFunc func() string } 
+				var _ I = &Mock{}
+				func (mock *Mock) String() string {
+					return mock.StringFunc()
+				}
+			after that, you can use like below:
+				var mock = &Mock{
+					// init the func like the normal field
+					StringFunc: func() string {
+						return "do"
+					},	
+				}
+				fmt.Println(mock.String())`,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:        "path",
+					Aliases:     []string{"p"},
+					DefaultText: "",
+					Usage:       "specify package path",
+				},
+				&cli.BoolFlag{
+					Name:        "recursive",
+					Aliases:     []string{"r"},
+					DefaultText: "",
+					Usage:       "if iterate recursive",
+				},
+				&cli.StringFlag{
+					Name:        "mode",
+					Aliases:     []string{""},
+					DefaultText: "normal",
+					Value:       "",
+					Usage:       "specify mode like normal or offsite",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				path := c.String("path")
+				rec := c.Bool("recursive")
+				mode := c.String("mode")
+
+				ip := &parser.ImportPath{}
+				curdir, paths, err := getPaths(ip, path, rec)
+				if err != nil {
+					log.Fatal(err)
+				}
+				if len(paths) == 0 {
+					log.Fatalf("找不到有效路径，请使用-p指定或设置-r！")
+				}
+				// fmt.Printf("paths: %+v\n", paths)
+
+				// 解析
+				p := parser.NewParser(parser.Option{
+					Op:                parser.OpMock,
+					UseSourceImporter: true,
+				})
+				pkgs, err := p.ParseByGoPackages(paths...)
+				if err != nil {
+					log.Fatal(err)
+				}
+				for _, pkg := range pkgs.Pkgs {
+					if err = pkg.SaveMock(mode, curdir, ""); err != nil {
+						log.Printf("gen mock failed, pkg: %+v, err: %+v\n", pkg, err)
+					}
+				}
+
+				return nil
+			},
+		},
 	}
 )
+
+func getPaths(ip *parser.ImportPath, path string, rec bool) (string, []string, error) {
+	var err error
+
+	dir, err := os.Getwd()
+	if err != nil {
+		return dir, nil, err
+	}
+
+	var paths []string
+
+	if path == "" {
+		path, err = ip.GetByCurrentDir()
+		if err != nil {
+			return dir, nil, err
+		}
+
+		haveGoFile, err := checkDirHaveGoFile(dir)
+		if err != nil {
+			return dir, nil, err
+		}
+		if haveGoFile {
+			paths = append(paths, path)
+		}
+	} else {
+		// 手动指定的path，不校验是否存在go文件，由用户自己保证
+		paths = append(paths, path)
+	}
+
+	modDir, modPath, err := ip.GetModFilePath(dir)
+	if err != nil {
+		return dir, nil, err
+	}
+	fmt.Printf("dir: %s, modDir: %s, modPath: %s\n", dir, modDir, modPath)
+
+	if rec {
+		dirs, err := collectGoFileDir(dir)
+		if err != nil {
+			return dir, nil, err
+		}
+		for _, d := range dirs {
+			paths = append(paths, strings.Replace(d, dir, modDir, -1))
+		}
+	}
+	return dir, paths, nil
+}
+
+// collectGoFileDir 在指定目录下收集含有go文件的子目录
+func collectGoFileDir(dir string) ([]string, error) {
+	var dirs []string
+	if err := filepath.Walk(dir, filepath.WalkFunc(func(childDir string, info os.FileInfo, ierr error) error {
+		if ierr != nil {
+			fmt.Printf("walk got err: %+v\n", ierr)
+		}
+
+		if childDir == dir {
+			return nil
+		}
+		// 获取所需目录
+		if !info.IsDir() {
+			return nil
+		}
+		haveGoFile, err := checkDirHaveGoFile(childDir)
+		if err != nil {
+			return err
+		}
+		// 过滤没有go文件的
+		if !haveGoFile {
+			return nil
+		}
+
+		dirs = append(dirs, childDir)
+
+		return nil
+	})); err != nil {
+		return nil, err
+	}
+
+	return dirs, nil
+}
+
+func checkDirHaveGoFile(dir string) (bool, error) {
+
+	fileInfos, err := os.ReadDir(dir)
+	if err != nil {
+		return false, err
+	}
+	haveGoFile := false
+	for _, fi := range fileInfos {
+		ext := filepath.Ext(fi.Name())
+		if ext == ".go" {
+			haveGoFile = true
+			break
+		}
+	}
+
+	return haveGoFile, nil
+}
