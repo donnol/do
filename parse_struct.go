@@ -32,31 +32,39 @@ func MakeStruct() Struct {
 func ResolveStruct(value any) (Struct, error) {
 	s := MakeStruct()
 
-	var refType reflect.Type
-	if v, ok := value.(reflect.Type); ok {
-		refType = v
+	var refValue reflect.Value
+	if v, ok := value.(reflect.Value); ok {
+		refValue = v
 	} else {
-		refType = reflect.TypeOf(value)
+		refValue = reflect.ValueOf(value)
 	}
-	s.Type = refType
+	s.Type = refValue.Type()
 
-	if refType == nil {
+	if s.Type == nil {
 		return s, fmt.Errorf("nil refType")
 	}
 
-	if refType.Kind() == reflect.Ptr { // 指针
-		refType = refType.Elem()
+	if s.Type.Kind() == reflect.Ptr { // 指针
+		s.Type = s.Type.Elem()
+		refValue = refValue.Elem()
 	}
-	if refType.Kind() != reflect.Struct {
-		return s, fmt.Errorf("bad value type , type is %v", refType.Kind())
+	if s.Type.Kind() != reflect.Struct {
+		return s, fmt.Errorf("bad value type , type is %v", s.Type.Kind())
 	}
-	structName := refType.PkgPath() + "." + refType.Name()
+
+	name := s.Type.Name()
+	li := strings.Index(name, "[")
+	ri := strings.Index(name, "]")
+	if li != -1 && ri != -1 && li < ri {
+		name = name[:li]
+	}
+	structName := s.Type.PkgPath() + "." + name
 	s.Name = structName
 
-	if refType.NumField() == 0 { // 空结构体
+	if s.Type.NumField() == 0 { // 空结构体
 		return s, nil
 	}
-	if err := collectStructComment(refType, &s); err != nil {
+	if err := collectStructComment(refValue, &s); err != nil {
 		return s, err
 	}
 
@@ -86,7 +94,9 @@ func uniqKey(rt reflect.Type) string {
 }
 
 // collectStructComment collect struct comment
-func collectStructComment(refType reflect.Type, s *Struct) error {
+func collectStructComment(refValue reflect.Value, s *Struct) error {
+	refType := refValue.Type()
+
 	// 解析-获取结构体注释
 	var r map[string]string
 	var f map[string]string
@@ -100,6 +110,7 @@ func collectStructComment(refType reflect.Type, s *Struct) error {
 	// 内嵌结构体
 	for i := 0; i < refType.NumField(); i++ {
 		field := refType.Field(i)
+		vfield := refValue.Field(i)
 
 		sf := Field{
 			StructField: field,
@@ -110,7 +121,16 @@ func collectStructComment(refType reflect.Type, s *Struct) error {
 		if field.Anonymous { // 匿名
 			// 忽略匿名接口
 			if fieldType.Kind() != reflect.Interface {
-				sf.Struct, err = ResolveStruct(fieldType)
+				sf.Struct, err = ResolveStruct(vfield)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		if fieldType.Kind() == reflect.Interface {
+			if vfield.CanInterface() {
+				vv := reflect.ValueOf(vfield.Interface())
+				sf.Struct, err = ResolveStruct(vv)
 				if err != nil {
 					return err
 				}
@@ -123,13 +143,14 @@ func collectStructComment(refType reflect.Type, s *Struct) error {
 			fieldType.Kind() == reflect.Chan ||
 			fieldType.Kind() == reflect.Array {
 			fieldType = fieldType.Elem()
+			vfield = vfield.Elem()
 		}
 		// 忽略time.Time
 		if fieldType.Kind() == reflect.Struct && fieldType != reflect.TypeOf((*time.Time)(nil)).Elem() {
 			// 字段类型元素包含本类型
 			isSelfType := uniqKey(fieldType) == uniqKey(refType)
 			if !isSelfType {
-				sf.Struct, err = ResolveStruct(fieldType)
+				sf.Struct, err = ResolveStruct(vfield)
 				if err != nil {
 					return err
 				}
@@ -223,7 +244,7 @@ func resolveWithParser(structName string) (map[string]string, map[string]string,
 	}
 	_ = exist
 	// if !exist {
-	// 	log.Printf("Can't find comment info of %s", structName)
+	// 	fmt.Printf("Can't find comment info of %s\n", structName)
 	// }
 
 	return structCommentMap, fieldCommentMap, nil

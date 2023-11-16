@@ -61,3 +61,28 @@ func jsonPrint(w io.Writer, in any) {
 		panic(err)
 	}
 }
+
+func TestGeneric(t *testing.T) {
+	r := EntityWithTotal[any]{Inner: EntityWithTotal[int]{Inner: 1, Total: 1}}
+
+	struc, err := ResolveStruct(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, field := range struc.Fields {
+		if field.Name != "Inner" {
+			continue
+		}
+
+		Assert(t, field.Comment, "data")
+
+		for _, ifield := range field.Struct.Fields {
+			if ifield.Name != "Inner" {
+				continue
+			}
+
+			Assert(t, ifield.Comment, "data")
+		}
+	}
+}
