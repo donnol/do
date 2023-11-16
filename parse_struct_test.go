@@ -122,7 +122,7 @@ func TestGeneric(t *testing.T) {
 	// inner slice
 	{
 		r := EntityWithTotal[any]{
-			Inner: PageResult[any]{
+			Inner: &PageResult[any]{
 				Total: 1,
 				List:  []any{1, 2, 3},
 			},
@@ -141,11 +141,11 @@ func TestGeneric(t *testing.T) {
 			Assert(t, field.Comment, "data")
 
 			for _, ifield := range field.Struct.Fields {
-				if ifield.Name != "Inner" {
+				if ifield.Name != "Total" {
 					continue
 				}
 
-				Assert(t, ifield.Comment, "data")
+				Assert(t, ifield.Comment, "total")
 			}
 		}
 	}
