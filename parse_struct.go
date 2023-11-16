@@ -130,6 +130,13 @@ func collectStructComment(refValue reflect.Value, s *Struct) error {
 		if fieldType.Kind() == reflect.Interface {
 			if vfield.CanInterface() {
 				vv := reflect.ValueOf(vfield.Interface())
+				if vv.Type().Kind() == reflect.Ptr ||
+					vv.Type().Kind() == reflect.Slice ||
+					vv.Type().Kind() == reflect.Map ||
+					vv.Type().Kind() == reflect.Chan ||
+					vv.Type().Kind() == reflect.Array {
+					vv = reflect.New(vv.Type().Elem()).Elem()
+				}
 				sf.Struct, err = ResolveStruct(vv)
 				if err != nil {
 					return err
@@ -143,7 +150,7 @@ func collectStructComment(refValue reflect.Value, s *Struct) error {
 			fieldType.Kind() == reflect.Chan ||
 			fieldType.Kind() == reflect.Array {
 			fieldType = fieldType.Elem()
-			vfield = vfield.Elem()
+			vfield = reflect.New(fieldType).Elem()
 		}
 		// 忽略time.Time
 		if fieldType.Kind() == reflect.Struct && fieldType != reflect.TypeOf((*time.Time)(nil)).Elem() {

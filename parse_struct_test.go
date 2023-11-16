@@ -63,26 +63,90 @@ func jsonPrint(w io.Writer, in any) {
 }
 
 func TestGeneric(t *testing.T) {
-	r := EntityWithTotal[any]{Inner: EntityWithTotal[int]{Inner: 1, Total: 1}}
-
-	struc, err := ResolveStruct(r)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, field := range struc.Fields {
-		if field.Name != "Inner" {
-			continue
+	// single
+	{
+		r := EntityWithTotal[any]{
+			Inner: EntityWithTotal[int]{1, 1},
 		}
 
-		Assert(t, field.Comment, "data")
+		struc, err := ResolveStruct(r)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-		for _, ifield := range field.Struct.Fields {
-			if ifield.Name != "Inner" {
+		for _, field := range struc.Fields {
+			if field.Name != "Inner" {
 				continue
 			}
 
-			Assert(t, ifield.Comment, "data")
+			Assert(t, field.Comment, "data")
+
+			for _, ifield := range field.Struct.Fields {
+				if ifield.Name != "Inner" {
+					continue
+				}
+
+				Assert(t, ifield.Comment, "data")
+			}
+		}
+	}
+
+	// slice
+	{
+		r := EntityWithTotal[any]{
+			Inner: []EntityWithTotal[int]{{1, 1}},
+		}
+
+		struc, err := ResolveStruct(r)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, field := range struc.Fields {
+			if field.Name != "Inner" {
+				continue
+			}
+
+			Assert(t, field.Comment, "data")
+
+			for _, ifield := range field.Struct.Fields {
+				if ifield.Name != "Inner" {
+					continue
+				}
+
+				Assert(t, ifield.Comment, "data")
+			}
+		}
+	}
+
+	// inner slice
+	{
+		r := EntityWithTotal[any]{
+			Inner: PageResult[any]{
+				Total: 1,
+				List:  []any{1, 2, 3},
+			},
+		}
+
+		struc, err := ResolveStruct(r)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, field := range struc.Fields {
+			if field.Name != "Inner" {
+				continue
+			}
+
+			Assert(t, field.Comment, "data")
+
+			for _, ifield := range field.Struct.Fields {
+				if ifield.Name != "Inner" {
+					continue
+				}
+
+				Assert(t, ifield.Comment, "data")
+			}
 		}
 	}
 }
