@@ -93,13 +93,15 @@ func (pkg Package) SaveMock(mode, dir, file string) error {
 
 	// debug.Printf("===test\n")
 	var content string
+	var allMockTypes []string
 	for _, single := range pkg.Interfaces {
 		// debug.Printf("have type set: %+v, embeds: %d\n", single.Interface, single.Interface.NumEmbeddeds())
 		if !single.Interface.IsMethodSet() {
 			log.Printf("have type set: %+v\n", single.Interface)
 			continue
 		}
-		mock, imps := single.MakeMock(mode)
+		mockType, mock, imps := single.MakeMock(mode)
+		allMockTypes = append(allMockTypes, mockType)
 		for imp := range imps {
 			imports[imp] = struct{}{}
 		}
@@ -108,10 +110,20 @@ func (pkg Package) SaveMock(mode, dir, file string) error {
 	if content == "" {
 		return nil
 	}
+	tmpl, err := template.New("proxyMethod").Parse(mockAllTmpl)
+	if err != nil {
+		panic(err)
+	}
+	var allMock = new(bytes.Buffer)
+	if err := tmpl.Execute(allMock, map[string]interface{}{
+		"mockTypes": allMockTypes,
+	}); err != nil {
+		panic(err)
+	}
 
 	// 全局变量/函数
 	globalContent := ``
-	content = globalContent + content
+	content = globalContent + allMock.String() + content
 
 	// 导入
 	var impcontent string
@@ -222,20 +234,31 @@ var (
 	`
 )
 
+var (
+	mockAllTmpl = `
+	var (
+		GenAllMocks = []any{
+			{{range $index, $mockType := .mockTypes}}&{{$mockType}}{},
+			{{end}}
+		}
+	)
+	`
+)
+
 type arg struct {
 	Name     string
 	Typ      string
 	Variadic bool
 }
 
-func (s Interface) MakeMock(mode string) (string, map[string]struct{}) {
+func (s Interface) MakeMock(mode string) (string, string, map[string]struct{}) {
 	if mode == "offsite" {
 		// 异地模式，忽略非导出接口
 		if !ast.IsExported(s.Name) {
-			return "", nil
+			return "", "", nil
 		}
 	}
-	fullTypeParam, partTypeParam := s.handleTypeParams()
+	fullTypeParam, partTypeParam, instanceTypeParam := s.handleTypeParams()
 	// debug.Printf("interface : %#v, %#v, %v, %v\n", s.Interface, s.Name, fullTypeParam, partTypeParam)
 	mockType := s.makeMockName()
 	mockRecv := s.makeMockRecv()
@@ -364,7 +387,7 @@ func (s Interface) MakeMock(mode string) (string, map[string]struct{}) {
 
 	// debug.Printf("is: %s\n", is)
 
-	return is, imports
+	return mockType + instanceTypeParam, is, imports
 }
 
 const (
@@ -491,7 +514,7 @@ func (s Interface) makeMockName() string {
 	return s.Name + "Mock"
 }
 
-func (s Interface) handleTypeParams() (full string, part string) {
+func (s Interface) handleTypeParams() (full string, part string, instance string) {
 	if s.TypeParams == nil {
 		return
 	}
@@ -504,14 +527,45 @@ func (s Interface) handleTypeParams() (full string, part string) {
 			part += name.Name
 		}
 		full += " " + types.ExprString(tp.Type)
+
+		instance += typeOfTypeParams(tp.Type)
+
 		if i != len(s.TypeParams.List)-1 {
 			full += ", "
 			part += ", "
+			instance += ", "
 		}
 	}
 	full = "[" + full + "]"
 	part = "[" + part + "]"
+	instance = "[" + instance + "]"
 	return
+}
+
+func typeOfTypeParams(typ ast.Expr) string {
+	// 根据类型参数来决定取值
+	// FIXME: 当出现如：type M[Mixed interface {int | string; Name() string}] struct{}的类型定义时，如此使用则不行
+	switch tv := typ.(type) {
+	case *ast.InterfaceType:
+		for _, item := range tv.Methods.List {
+			if _, ok := item.Type.(*ast.FuncType); ok {
+				continue
+			}
+
+			// fmt.Printf("interface method list: %#v\n", item.Type)
+			r := typeOfTypeParams(item.Type)
+			if r != "" {
+				return r
+			}
+		}
+	case *ast.BinaryExpr:
+		r := types.ExprString(tv.Y)
+		// fmt.Printf("binary expr: %s\n", r)
+
+		return r
+	}
+
+	return types.ExprString(typ)
 }
 
 func (s Interface) RemoveFirst(c string) string {
