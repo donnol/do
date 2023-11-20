@@ -173,3 +173,62 @@ func TestPassword_String(t *testing.T) {
 		})
 	}
 }
+
+func TestPageResult(t *testing.T) {
+	tests := []struct {
+		name string
+		v    any
+		want string
+	}{
+		// TODO: Add test cases.
+		{
+			name: "p",
+			v: PageResult[int]{
+				Total: 10,
+				ListResult: ListResult[int]{
+					List: []int{1, 2, 3},
+				},
+			},
+			want: `{"total":10,"list":[1,2,3]}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := json.Marshal(tt.v)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(data) != tt.want {
+				t.Errorf("bad case: %s != %s", string(data), tt.want)
+			}
+		})
+	}
+}
+
+func TestListResult(t *testing.T) {
+	tests := []struct {
+		name string
+		v    any
+		want string
+	}{
+		// TODO: Add test cases.
+		{
+			name: "p",
+			v: ListResult[int]{
+				List: []int{1, 2, 3},
+			},
+			want: `{"list":[1,2,3]}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := json.Marshal(tt.v)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(data) != tt.want {
+				t.Errorf("bad case: %s != %s", string(data), tt.want)
+			}
+		})
+	}
+}

@@ -124,7 +124,9 @@ func TestGeneric(t *testing.T) {
 		r := EntityWithTotal[any]{
 			Inner: &PageResult[any]{
 				Total: 1,
-				List:  []any{1, 2, 3},
+				ListResult: ListResult[any]{
+					List: []any{1, 2, 3},
+				},
 			},
 		}
 

@@ -10,18 +10,25 @@ import (
 
 type (
 	Pager struct {
-		Page     int `json:"page"`     // page No.
-		PageSize int `json:"pageSize"` // page size
+		Page     int `json:"page" form:"page"`         // page No.
+		PageSize int `json:"pageSize" form:"pageSize"` // page size
 	}
 	PageResult[T any] struct {
 		Total int64 `json:"total"` // total
-		List  []T   `json:"list"`  // list
+
+		ListResult[T]
+	}
+	ListResult[T any] struct {
+		List []T `json:"list"` // list
 	}
 )
 
 type (
 	IdType[T any] struct {
 		Id T `json:"id" form:"id"` // id
+	}
+	IdsType[T any] struct {
+		Ids []T `json:"ids" form:"ids"` // ids
 	}
 )
 
