@@ -2,8 +2,8 @@ package do
 
 // EntityWithTotal used to scan col1, col2, col3 to T, and scan total to Total when columns is [col1, col2, col3, total] if *T is interface{ ValuePtrs() []any }
 type EntityWithTotal[T any] struct {
-	Inner T   // data
-	Total int `db:"total"` // total
+	Inner T     // data
+	Total int64 `db:"total"` // total
 }
 
 // ValuePtrs return T's fields and Total's pointer if *T is interface{ ValuePtrs() []any }, or return Inner and Total's pointer; use by rows.Scan(s.ValuePtrs()....)
