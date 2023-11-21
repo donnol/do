@@ -232,3 +232,69 @@ func TestListResult(t *testing.T) {
 		})
 	}
 }
+
+func TestEntity(t *testing.T) {
+	tests := []struct {
+		name string
+		v    any
+		want string
+	}{
+		// TODO: Add test cases.
+		{
+			name: "p",
+			v: Entity[int]{
+				Id:   1,
+				Name: "jd",
+			},
+			want: `{"id":1,"name":"jd"}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := json.Marshal(tt.v)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(data) != tt.want {
+				t.Errorf("bad case: %s != %s", string(data), tt.want)
+			}
+		})
+	}
+}
+
+func TestTreeEntity(t *testing.T) {
+	tests := []struct {
+		name string
+		v    any
+		want string
+	}{
+		// TODO: Add test cases.
+		{
+			name: "p",
+			v: TreeEntity[int]{
+				Entity: Entity[int]{
+					Id:   1,
+					Name: "jd",
+				},
+				Childs: []Entity[int]{
+					{
+						Id:   2,
+						Name: "ddd",
+					},
+				},
+			},
+			want: `{"id":1,"name":"jd","childs":[{"id":2,"name":"ddd"}]}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := json.Marshal(tt.v)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(data) != tt.want {
+				t.Errorf("bad case: %s != %s", string(data), tt.want)
+			}
+		})
+	}
+}

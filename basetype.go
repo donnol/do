@@ -9,6 +9,18 @@ import (
 )
 
 type (
+	Entity[U any] struct {
+		Id   U      `json:"id"`   // id
+		Name string `json:"name"` // 名称
+	}
+	TreeEntity[U any] struct {
+		Entity[U]
+
+		Childs []Entity[U] `json:"childs"` // 子元素
+	}
+)
+
+type (
 	Pager struct {
 		Page     int `json:"page" form:"page"`         // page No.
 		PageSize int `json:"pageSize" form:"pageSize"` // page size
