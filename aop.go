@@ -99,7 +99,7 @@ func GlobalProxyCtxMap() *ProxyCtxFuncStore {
 type Tracer interface {
 	New(pctx ProxyContext, extras ...any) Tracer // 新建Tracer，每个方法调用均新建一个
 	Begin()
-	Stop()
+	Stop(args ...any)
 }
 
 type tracers []Tracer
@@ -115,17 +115,17 @@ func RegisterProxyTracer(tracers ...Tracer) {
 }
 
 // ProxyTraceBegin LIFO
-func ProxyTraceBegin(pctx ProxyContext, extras ...any) (stop func()) {
-	stops := make([]func(), 0, len(gtracers))
+func ProxyTraceBegin(pctx ProxyContext, extras ...any) (stop func(args ...any)) {
+	stops := make([]func(args ...any), 0, len(gtracers))
 	for _, tc := range gtracers {
 		o := tc.New(pctx, extras...)
 		o.Begin()
 		stops = append(stops, o.Stop)
 	}
-	stop = func() {
+	stop = func(args ...any) {
 		for i := len(stops) - 1; i >= 0; i-- {
 			so := stops[i]
-			so()
+			so(args...)
 		}
 	}
 	return
@@ -155,7 +155,7 @@ func (impl *TimeTracer) Begin() {
 	impl.begin = time.Now()
 }
 
-func (impl *TimeTracer) Stop() {
+func (impl *TimeTracer) Stop(_ ...any) {
 	log.Output(3, fmt.Sprintf("[%s] |%s| used time %v\n", impl.pctx, impl.traceId, time.Since(impl.begin)))
 }
 

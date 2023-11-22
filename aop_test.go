@@ -29,8 +29,8 @@ func (impl *tracerImpl) Begin() {
 	impl.begin = time.Now()
 }
 
-func (impl *tracerImpl) Stop() {
-	log.Output(3, fmt.Sprintf("[%s] NO.%d: used time %v\n", impl.pctx, impl.no, time.Since(impl.begin)))
+func (impl *tracerImpl) Stop(args ...any) {
+	log.Output(3, fmt.Sprintf("[%s] NO.%d: used time %v, args: %+v\n", impl.pctx, impl.no, time.Since(impl.begin), args))
 }
 
 func TestProxyTracer(t *testing.T) {
@@ -50,12 +50,12 @@ func TestProxyTracer(t *testing.T) {
 	}
 	func() {
 		stop := ProxyTraceBegin(tpctx)
-		defer stop()
+		defer stop("test result")
 	}()
 
 	func() {
 		stop := ProxyTraceBegin(tpctx)
-		defer stop()
+		defer stop("test result")
 	}()
 
 	// assert
@@ -76,6 +76,12 @@ func TestProxyTracer(t *testing.T) {
 			}
 			if !strings.Contains(part, want) {
 				t.Errorf("bad case: %s don't contains %s", part, want)
+			}
+			if part != "" {
+				wantr := "args: [test result]"
+				if !strings.Contains(part, wantr) {
+					t.Errorf("bad case: %s don't contains %s", part, wantr)
+				}
 			}
 		}
 	}
