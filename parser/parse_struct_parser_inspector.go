@@ -186,12 +186,12 @@ var (
 	{{.methodName}}: {{.funcSignature}} {
 		var _gen_ctx = {{.mockType}}{{.funcName}}ProxyContext
 
+		{{.funcResult}}
+
 		_gen_stop := do.ProxyTraceBegin(_gen_ctx{{if .argNamesWithoutVari}}, {{.argNamesWithoutVari}} {{end}})
 		defer func() {
-			_gen_stop()
+			_gen_stop({{.funcResultList}})
 		}()
-
-		{{.funcResult}}
 		
 		var _gen_actual_cf do.ProxyCtxFunc
 
