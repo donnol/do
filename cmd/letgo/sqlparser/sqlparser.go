@@ -72,6 +72,9 @@ func ParseCreateSQLBatch(sql string, opts ...ParseSetter) []*Struct {
 			tablePrefix: opt.tablePrefix,
 		}
 		node.Accept(s)
+		if s.Name == "" {
+			continue
+		}
 		r = append(r, s)
 	}
 
@@ -536,10 +539,23 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 			if fieldName == "TableName" {
 				fieldName += "Field"
 			}
+
 			fieldType := field.Type
 			if opt.FieldTypeMapper != nil {
 				fieldType = opt.FieldTypeMapper(fieldType)
 			}
+			// 根据comment里的 type(do.Id) 获得类型
+			{
+				const bs = "type("
+				bi := strings.Index(field.Comment, bs)
+				ei := strings.Index(field.Comment, ")")
+				if bi != -1 && ei != -1 && bi < ei {
+					es := field.Comment[bi+len(bs) : ei]
+					fieldType = es
+					field.Comment = strings.ReplaceAll(field.Comment, field.Comment[bi:ei+1], "")
+				}
+			}
+
 			fieldTag := field.Tag
 			if opt.FieldTagMapper != nil {
 				fieldTag = opt.FieldTagMapper(field.Name, field.Type)
