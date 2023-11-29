@@ -42,3 +42,43 @@ func RegisterRouter[H RouteRegister, RH RouteHandler[P, R], P, R any](
 		r, err = f(req.Context(), p)
 	})
 }
+
+type HandlerFunc[T any] func(T)
+
+func (h HandlerFunc[T]) HTTPHandlerFunc(t T) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if h == nil {
+			return
+		}
+
+		h(t)
+	}
+}
+
+type Route[T any] struct {
+	Method  string
+	Path    string
+	Comment string
+	Handler HandlerFunc[T]
+	Childs  []*Route[T]
+}
+
+func (r *Route[T]) WithChilds(childs ...*Route[T]) *Route[T] {
+	r.Childs = append(r.Childs, childs...)
+	return r
+}
+
+func (r *Route[T]) SetChilds(childs ...*Route[T]) *Route[T] {
+	r.Childs = childs
+	return r
+}
+
+func NewRoute[T any](method, path, comment string, h HandlerFunc[T], childs ...*Route[T]) *Route[T] {
+	return &Route[T]{
+		Method:  method,
+		Path:    path,
+		Comment: comment,
+		Handler: h,
+		Childs:  childs,
+	}
+}
