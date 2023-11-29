@@ -18,6 +18,7 @@ func AssertSlice[T comparable](handler AssertHandler, lslice, rslice []T, msgAnd
 	ll, rl := len(lslice), len(rslice)
 	if ll != rl {
 		handler.Errorf("Bad case, left length(%d) != right length(%d)", ll, rl)
+		return
 	}
 
 	for i := 0; i < ll; i++ {
