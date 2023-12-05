@@ -3,6 +3,8 @@ package do
 import (
 	"errors"
 	"fmt"
+	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,14 +36,16 @@ func New[T any](
 }
 
 type Claims[T any] struct {
-	User T
+	User  T
+	Nonce string
 	jwt.RegisteredClaims
 }
 
 // Sign `user` can be a id or an object
 func (t *Token[T]) Sign(user T) (string, error) {
 	claims := Claims[T]{
-		User: user,
+		User:  user,
+		Nonce: strconv.FormatInt(rand.Int63(), 10),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(t.exp)),
 			Issuer:    t.issuer,
