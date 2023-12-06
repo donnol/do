@@ -186,6 +186,13 @@ const (
 	structValuePtrsFooter = `
 		}
 	}`
+
+	structExists = `
+
+	func (s {{.StructName}}) Exists() bool {
+		return s.Id != 0
+	}
+	`
 )
 
 type Struct struct {
@@ -758,6 +765,19 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 	}
 	{
 		if _, err := w.Write(svpbuf.Bytes()); err != nil {
+			return err
+		}
+	}
+	{
+		// structExists
+		temp, err := template.New("structExists").Parse(structExists)
+		if err != nil {
+			return err
+		}
+		if err := temp.Execute(w, map[string]any{
+			"StructName": name,
+			"TableName":  s.Name,
+		}); err != nil {
 			return err
 		}
 	}
