@@ -10,16 +10,12 @@ import (
 	"testing"
 )
 
-var output = new(bytes.Buffer)
-var bw *bufio.Writer
-
-func init() {
-	bw = bufio.NewWriter(output)
-	log.SetOutput(bw)
-}
-
 // Go run f in a new goroutine with defer recover
 func TestGo(t *testing.T) {
+	var output = new(bytes.Buffer)
+	bw := bufio.NewWriter(output)
+	log.SetOutput(bw)
+
 	wg := new(sync.WaitGroup)
 
 	wg.Add(1)
@@ -43,6 +39,10 @@ func TestGo(t *testing.T) {
 }
 
 func TestGoR(t *testing.T) {
+	var output = new(bytes.Buffer)
+	bw := bufio.NewWriter(output)
+	log.SetOutput(bw)
+
 	wg := new(sync.WaitGroup)
 
 	wg.Add(1)

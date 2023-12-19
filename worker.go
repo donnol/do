@@ -79,7 +79,7 @@ func NewWorker(n int) *Worker {
 	return &Worker{
 		limitChan: make(chan struct{}, n),
 		stopChan:  make(chan struct{}),
-		jobChan:   chanx.NewUnboundedChan[Job](n),
+		jobChan:   chanx.NewUnboundedChan[Job](context.Background(), n),
 		errChan:   make(chan error, errCount),
 		wg:        new(sync.WaitGroup),
 	}
