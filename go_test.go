@@ -37,8 +37,8 @@ func TestGo(t *testing.T) {
 	})
 
 	wg.Wait()
-
 	Must(bw.Flush())
+
 	Assert(t, strings.Contains(output.String(), "panic stack:"), true, "output is %s", output)
 }
 
@@ -62,6 +62,7 @@ func TestGoR(t *testing.T) {
 	})
 
 	wg.Wait()
+	Must(bw.Flush())
 
 	r := <-ch
 	Assert(t, r, "r1")

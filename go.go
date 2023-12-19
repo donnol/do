@@ -18,7 +18,7 @@ func GoR[P, R any](c C, p P, f func(C, P) R) <-chan R {
 	ch := make(chan R, 1)
 
 	go func(c C, p P) {
-		r := callInDefRec(c, p, f)
+		r := CallInDefRec(c, p, f)
 
 		ch <- r
 	}(c, p)
@@ -26,8 +26,8 @@ func GoR[P, R any](c C, p P, f func(C, P) R) <-chan R {
 	return ch
 }
 
-// callInDefRec run f with defer recover to catch panic
-func callInDefRec[P, R any](c C, p P, f func(C, P) R) R {
+// CallInDefRec run f with defer recover to catch panic
+func CallInDefRec[P, R any](c C, p P, f func(C, P) R) R {
 	defer func() {
 		if v := recover(); v != nil {
 			log.Printf("panic stack: %s", debug.Stack())
