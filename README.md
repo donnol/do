@@ -6,6 +6,33 @@ Do something interesting.
 
 Base Go1.18 with generic.
 
+## Usage of `letgo`
+
+- TCP代理
+- 从SQL建表语句生成结构体
+- 从接口定义生成Mock结构体
+
+Install: `go install github.com/donnol/do/cmd/letgo@latest`
+
+Usage:
+
+```sh
+NAME:
+   letgo.exe - A new cli application
+
+USAGE:
+   letgo.exe [global options] command [command options] [arguments...]
+
+COMMANDS:
+   proxy       letgo proxy --localAddr=':54388' --remoteAddr='127.0.0.1:54399'
+   sql2struct  letgo sql2struct 'create table user(id int not null)'
+   mock        letgo mock -p=github.com/xxx/yyy -r
+   help, h     Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --help, -h  show help
+```
+
 ## Must
 
 Panic if error is not nil, otherwise return some result except the error.
