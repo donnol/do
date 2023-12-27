@@ -1,6 +1,9 @@
 package do
 
-import "fmt"
+import (
+	"fmt"
+	"runtime"
+)
 
 type AssertHandler interface {
 	Errorf(format string, args ...any)
@@ -11,7 +14,12 @@ func Assert[T comparable](handler AssertHandler, l, r T, msgAndArgs ...any) {
 		return
 	}
 
-	handler.Errorf("Bad case, %v != %v, %s", l, r, messageFromMsgAndArgs(msgAndArgs...))
+	_, file, line, ok := runtime.Caller(1)
+	if ok {
+		handler.Errorf("[%s:%d] Bad case, %v != %v, %s", file, line, l, r, messageFromMsgAndArgs(msgAndArgs...))
+	} else {
+		handler.Errorf("Bad case, %v != %v, %s", l, r, messageFromMsgAndArgs(msgAndArgs...))
+	}
 }
 
 func AssertSlice[T comparable](handler AssertHandler, lslice, rslice []T, msgAndArgs ...any) {
