@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+	"time"
 )
 
 type (
@@ -94,6 +95,17 @@ func TestDoHTTPRequest(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("DoHTTPRequest() = %v, want %v", got, tt.want)
+			}
+
+			{
+				got, err := SendHTTPRequest(NewHTTPClient(HTTPClientWithTimeout(2*time.Second), HTTPClientSkipVerify()), tt.args.method, tt.args.link, tt.args.body, tt.args.header, tt.args.codeChecker, tt.args.extractResult)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("DoHTTPRequest() error = %v, wantErr %v", err, tt.wantErr)
+					return
+				}
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("DoHTTPRequest() = %v, want %v", got, tt.want)
+				}
 			}
 		})
 	}
