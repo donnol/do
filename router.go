@@ -59,6 +59,7 @@ type Route[T any] struct {
 	Method  string
 	Path    string
 	Comment string
+	Opt     *RouteOption
 	Handler HandlerFunc[T]
 	Childs  []*Route[T]
 }
@@ -73,12 +74,28 @@ func (r *Route[T]) SetChilds(childs ...*Route[T]) *Route[T] {
 	return r
 }
 
+func (r *Route[T]) WithOption(opt *RouteOption) *Route[T] {
+	r.Opt = opt
+	return r
+}
+
 func NewRoute[T any](method, path, comment string, h HandlerFunc[T], childs ...*Route[T]) *Route[T] {
 	return &Route[T]{
 		Method:  method,
 		Path:    path,
 		Comment: comment,
+		Opt:     &RouteOption{NeedLogin: true},
 		Handler: h,
 		Childs:  childs,
 	}
 }
+
+type (
+	RouteOption struct {
+		NeedLogin bool // 是否需要登录
+
+		ParamFormat  string // json | xml
+		ResultFormat string // json | xml
+		UseBody      bool   // 使用body传递参数
+	}
+)
