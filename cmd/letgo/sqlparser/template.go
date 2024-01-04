@@ -26,7 +26,7 @@ var _ = func() struct{} {
 				panic("invalid enum")
 			} 	{{end}}	{{end}}
 	return struct{}{}
-}
+}()
 	`
 )
 
