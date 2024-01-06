@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"text/template"
 
 	"github.com/donnol/do"
 	"github.com/donnol/do/cmd/letgo/sqlparser"
@@ -233,6 +234,100 @@ var (
 				fmt.Println()
 
 				return nil
+			},
+		},
+		{
+			Name:  "struct2struct(experiment)",
+			Usage: `letgo struct2struct --from api.User --to user.User`,
+			Description: `generate function like: 
+			func ToUser(in *api.User) *user.User {
+				return &user.User{
+					Name: in.Name, // if field exist, use it
+					Age: 0, // if field not exist, use zero value
+				}
+			}
+			`,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:  "from",
+					Usage: "specify from struct",
+				},
+				&cli.StringFlag{
+					Name:  "to",
+					Usage: "specify to struct",
+				},
+			},
+			Action: func(c *cli.Context) (err error) {
+				from := c.String("from")
+				to := c.String("to")
+				_, _ = from, to
+
+				ip := &parser.ImportPath{}
+				curdir, paths, err := getPaths(ip, "", true)
+				if err != nil {
+					log.Fatal(err)
+				}
+				_ = curdir
+				if len(paths) == 0 {
+					log.Fatalf("找不到有效路径，请使用-p指定或设置-r！")
+				}
+				// fmt.Printf("paths: %+v\n", paths)
+
+				// 解析
+				p := parser.NewParser(parser.Option{
+					Op:                parser.OpMock,
+					UseSourceImporter: true,
+				})
+				pkgs, err := p.ParseByGoPackages(paths...)
+				if err != nil {
+					log.Fatal(err)
+				}
+				var f, t parser.Struct
+				for _, pkg := range pkgs.Pkgs {
+					for _, s := range pkg.Structs {
+						name := s.PkgName + "." + s.Name
+						if name == from || s.Name == from {
+							f = s
+						}
+						if name == to || s.Name == to {
+							t = s
+						}
+						if f.Name != "" && t.Name != "" {
+							break
+						}
+					}
+				}
+				m := make(map[string]parser.Field)
+				for _, field := range f.Fields {
+					m[field.Name] = field
+				}
+
+				type FieldPair struct {
+					From string
+					To   string
+				}
+				fps := make([]FieldPair, 0, len(t.Fields))
+				for _, field := range t.Fields {
+					fromName := m[field.Name].Name
+					fps = append(fps, FieldPair{
+						From: fromName,
+						To:   field.Name,
+					})
+				}
+
+				type Template struct {
+					FromType, ToType string
+					FieldPair        []FieldPair
+				}
+				buf := new(bytes.Buffer)
+				do.Must1(template.New("struct2struct").Parse(struct2structTmpl)).Execute(buf, Template{
+					FromType:  from,
+					ToType:    to,
+					FieldPair: fps,
+				})
+				fmt.Printf("%s\n", buf)
+
+				return
 			},
 		},
 		{
