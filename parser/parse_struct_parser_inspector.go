@@ -100,8 +100,12 @@ func (pkg Package) SaveMock(mode, dir, file string) error {
 			log.Printf("have type set: %+v\n", single.Interface)
 			continue
 		}
+
 		mockType, mock, imps := single.MakeMock(mode)
-		allMockTypes = append(allMockTypes, mockType)
+		if mockType != "" {
+			allMockTypes = append(allMockTypes, mockType)
+		}
+
 		for imp := range imps {
 			imports[imp] = struct{}{}
 		}
@@ -543,6 +547,12 @@ func (s Interface) handleTypeParams() (full string, part string, instance string
 }
 
 func typeOfTypeParams(typ ast.Expr) string {
+	// 特别处理`comparable`约束
+	typName := types.ExprString(typ)
+	if typName == "comparable" {
+		return "int"
+	}
+
 	// 根据类型参数来决定取值
 	// FIXME: 当出现如：type M[Mixed interface {int | string; Name() string}] struct{}的类型定义时，如此使用则不行
 	switch tv := typ.(type) {
@@ -565,7 +575,7 @@ func typeOfTypeParams(typ ast.Expr) string {
 		return r
 	}
 
-	return types.ExprString(typ)
+	return typName
 }
 
 func (s Interface) RemoveFirst(c string) string {
