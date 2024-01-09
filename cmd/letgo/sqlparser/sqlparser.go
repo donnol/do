@@ -1,7 +1,6 @@
 package sqlparser
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -72,7 +71,7 @@ func ParseCreateSQLBatch(sql string, opts ...ParseSetter) []*Struct {
 			tablePrefix: opt.tablePrefix,
 		}
 		node.Accept(s)
-		if s.Name == "" {
+		if s.TableName == "" {
 			continue
 		}
 		r = append(r, s)
@@ -111,96 +110,14 @@ func extract(rootNode *ast.StmtNode) []string {
 	return v.colNames
 }
 
-const (
-	structHeadTmpl = `
-	// {{.StructName}} {{.StructComment}}
-	type {{.StructName}} struct {
-	`
-	structFieldTmpl = `	{{.FieldName}} {{.FieldType}} {{.FieldTag}} // {{.FieldComment}}
-	`
-	structFootTmpl      = `}`
-	structTableNameTmpl = `
-	func ({{.StructName}}) TableName() string {
-		return "{{.TableName}}"
-	}
-	`
-
-	structColumn = `
-	func (s {{.StructName}}) Columns() []string {
-		return s.NameHelper().Columns()
-	}
-	`
-
-	helperStructHeadTmpl = `
-	type _{{.StructName}}NameHelper struct {
-	`
-	helperStructFieldTmpl = `	{{.FieldName}} string // field: {{.DBField}}
-	`
-	helperStructFootTmpl = `}`
-
-	helperMethodFuzzTmpl = `
-	// FuzzWrap make v become %v%
-	func (_{{.StructName}}NameHelper) FuzzWrap(v string) string {
-		return "%" + v + "%"
-	}
-	`
-	helperMethodColsHeaderTmpl = `
-	func (_{{.StructName}}NameHelper) Columns() []string {
-		return []string{
-	`
-	helperMethodColsBodyTmpl = `"{{.DBField}}",
-	`
-	helperMethodColsFooterTmpl = `
-			}
-		}
-	`
-
-	structHelperHeader = `
-	func ({{.StructName}}) NameHelper() _{{.StructName}}NameHelper {
-		return _{{.StructName}}NameHelper{
-	`
-	structHelperBody = `{{.FieldName}}: "{{.DBField}}",
-	`
-	structHelperFooter = `
-		}
-	}
-	`
-
-	structValuesHeader = `
-	func (s {{.StructName}}) Values() []any {
-		return []any{
-	`
-	structValuesBody = `s.{{.FieldName}},
-	`
-	structValuesFooter = `
-		}
-	}
-	`
-
-	structValuePtrsHeader = `
-	func (s *{{.StructName}}) ValuePtrs() []any {
-		return []any{
-	`
-	structValuePtrsBody = `&s.{{.FieldName}},
-	`
-	structValuePtrsFooter = `
-		}
-	}`
-
-	structExists = `
-
-	func (s {{.StructName}}) Exists() bool {
-		return s.Id != 0
-	}
-	`
-)
-
 type Struct struct {
 	tablePrefix string
 
-	Name    string
-	Comment string
-	Fields  []Field
+	PkgName   string
+	Name      string
+	TableName string
+	Comment   string
+	Fields    []Field
 
 	HaveEnum bool
 }
@@ -220,7 +137,7 @@ type Enum struct {
 func (v *Struct) Enter(in ast.Node) (ast.Node, bool) {
 	switch node := in.(type) {
 	case *ast.CreateTableStmt:
-		v.Name = node.Table.Name.O
+		v.TableName = node.Table.Name.O
 		for _, opt := range node.Options {
 			if opt.Tp == ast.TableOptionComment {
 				v.Comment = opt.StrValue
@@ -439,7 +356,7 @@ func (opt *Option) fillByDefault() {
 func (s *Struct) Gen(w io.Writer, opt Option) error {
 	(&opt).fillByDefault()
 
-	name := s.Name
+	name := s.TableName
 	// 去掉前缀
 	if opt.TrimTablePrefix != "" {
 		name = strings.TrimPrefix(name, opt.TrimTablePrefix)
@@ -447,381 +364,14 @@ func (s *Struct) Gen(w io.Writer, opt Option) error {
 	if opt.StructNameMapper != nil {
 		name = opt.StructNameMapper(name)
 	}
+	s.Name = name
+
 	{
-		temp, err := template.New("structHead").Parse(structHeadTmpl)
+		temp, err := template.New("sql2struct").Parse(tableTmpl)
 		if err != nil {
 			return err
 		}
-		if err := temp.Execute(w, map[string]any{
-			"StructName":    name,
-			"StructComment": s.Comment,
-		}); err != nil {
-			return err
-		}
-	}
-
-	hbuf := new(bytes.Buffer)
-	{
-		temp, err := template.New("structHead").Parse(helperStructHeadTmpl)
-		if err != nil {
-			return err
-		}
-		if err := temp.Execute(hbuf, map[string]any{
-			"StructName":    name,
-			"StructComment": s.Comment,
-		}); err != nil {
-			return err
-		}
-	}
-	hhbuf := new(bytes.Buffer)
-	{
-		temp, err := template.New("structHead").Parse(helperMethodColsHeaderTmpl)
-		if err != nil {
-			return err
-		}
-		if err := temp.Execute(hhbuf, map[string]any{
-			"StructName":    name,
-			"StructComment": s.Comment,
-		}); err != nil {
-			return err
-		}
-	}
-	shbuf := new(bytes.Buffer)
-	{
-		temp, err := template.New("structHead").Parse(structHelperHeader)
-		if err != nil {
-			return err
-		}
-		if err := temp.Execute(shbuf, map[string]any{
-			"StructName":    name,
-			"StructComment": s.Comment,
-		}); err != nil {
-			return err
-		}
-	}
-	svbuf := new(bytes.Buffer)
-	{
-		temp, err := template.New("structHead").Parse(structValuesHeader)
-		if err != nil {
-			return err
-		}
-		if err := temp.Execute(svbuf, map[string]any{
-			"StructName":    name,
-			"StructComment": s.Comment,
-		}); err != nil {
-			return err
-		}
-	}
-	svpbuf := new(bytes.Buffer)
-	{
-		temp, err := template.New("structHead").Parse(structValuePtrsHeader)
-		if err != nil {
-			return err
-		}
-		if err := temp.Execute(svpbuf, map[string]any{
-			"StructName":    name,
-			"StructComment": s.Comment,
-		}); err != nil {
-			return err
-		}
-	}
-
-	haveEnum := false
-	structTmpl := StructForTmpl{
-		StructName:    name,
-		StructComment: s.Comment,
-	}
-	{
-		for _, field := range s.Fields {
-			fieldName := field.Name
-			if len(opt.IgnoreField) > 0 {
-				if lo.IndexOf(opt.IgnoreField, fieldName) > -1 {
-					continue
-				}
-			}
-			if opt.FieldNameMapper != nil {
-				fieldName = opt.FieldNameMapper(fieldName)
-			}
-			// 与TableName()方法重名时，添加后缀；因为用了tag来与数据库字段对应，所以影响不大
-			if fieldName == "TableName" {
-				fieldName += "Field"
-			}
-
-			fieldType := field.Type
-			if opt.FieldTypeMapper != nil {
-				fieldType = opt.FieldTypeMapper(fieldType)
-			}
-			// 根据comment里的 type(do.Id) 获得类型
-			{
-				const bs = "type("
-				bi := strings.Index(field.Comment, bs)
-				ei := strings.Index(field.Comment, ")")
-				if bi != -1 && ei != -1 && bi < ei {
-					es := field.Comment[bi+len(bs) : ei]
-					fieldType = es
-					field.Comment = strings.ReplaceAll(field.Comment, field.Comment[bi:ei+1], "")
-				}
-			}
-
-			fieldTag := field.Tag
-			if opt.FieldTagMapper != nil {
-				fieldTag = opt.FieldTagMapper(field.Name, field.Type)
-			}
-			temp, err := template.New("structField").Parse(structFieldTmpl)
-			if err != nil {
-				return err
-			}
-
-			structField := StructField{
-				FieldName:    fieldName,
-				FieldType:    fieldType,
-				FieldTag:     fieldTag,
-				FieldComment: field.Comment,
-				DBField:      field.DBField,
-			}
-			structTmpl.Fields = append(structTmpl.Fields, structField)
-
-			if err := temp.Execute(w, map[string]any{
-				"FieldName":    fieldName,
-				"FieldType":    fieldType,
-				"FieldTag":     fieldTag,
-				"DBField":      field.DBField,
-				"FieldComment": field.Comment,
-			}); err != nil {
-				return err
-			}
-
-			{
-				temp, err := template.New("structField").Parse(helperStructFieldTmpl)
-				if err != nil {
-					return err
-				}
-				if err := temp.Execute(hbuf, map[string]any{
-					"FieldName":    fieldName,
-					"FieldType":    fieldType,
-					"FieldTag":     fieldTag,
-					"DBField":      field.DBField,
-					"FieldComment": field.Comment,
-				}); err != nil {
-					return err
-				}
-			}
-			{
-				temp, err := template.New("structField").Parse(structHelperBody)
-				if err != nil {
-					return err
-				}
-				if err := temp.Execute(shbuf, map[string]any{
-					"FieldName":    fieldName,
-					"FieldType":    fieldType,
-					"FieldTag":     fieldTag,
-					"DBField":      field.DBField,
-					"FieldComment": field.Comment,
-				}); err != nil {
-					return err
-				}
-			}
-			{
-				temp, err := template.New("structField").Parse(structValuesBody)
-				if err != nil {
-					return err
-				}
-				if err := temp.Execute(svbuf, map[string]any{
-					"FieldName":    fieldName,
-					"FieldType":    fieldType,
-					"FieldTag":     fieldTag,
-					"DBField":      field.DBField,
-					"FieldComment": field.Comment,
-				}); err != nil {
-					return err
-				}
-			}
-			{
-				temp, err := template.New("structField").Parse(structValuePtrsBody)
-				if err != nil {
-					return err
-				}
-				if err := temp.Execute(svpbuf, map[string]any{
-					"FieldName":    fieldName,
-					"FieldType":    fieldType,
-					"FieldTag":     fieldTag,
-					"DBField":      field.DBField,
-					"FieldComment": field.Comment,
-				}); err != nil {
-					return err
-				}
-			}
-
-			{
-				temp, err := template.New("structField").Parse(helperMethodColsBodyTmpl)
-				if err != nil {
-					return err
-				}
-				if err := temp.Execute(hhbuf, map[string]any{
-					"FieldName":    fieldName,
-					"FieldType":    fieldType,
-					"FieldTag":     fieldTag,
-					"DBField":      field.DBField,
-					"FieldComment": field.Comment,
-				}); err != nil {
-					return err
-				}
-			}
-			// enumCheckHeader
-			// enumCheckBody
-			// enumCheckFooter
-			if len(field.Enums) > 0 {
-				haveEnum = true
-				s.HaveEnum = haveEnum
-
-				fieldEnum := EnumField{
-					StructField: structField,
-				}
-				for _, e := range field.Enums {
-					ev := e.EnumValue
-					if fieldType == "string" {
-						ev = fmt.Sprintf("%q", ev)
-					} else {
-						_, err1 := strconv.ParseInt(ev, 10, 64)
-						_, err2 := strconv.ParseUint(ev, 10, 64)
-						if err1 != nil && err2 != nil {
-							ev = fmt.Sprintf("%q", ev)
-						}
-					}
-					efv := EnumFieldValue{
-						StructField:      structField,
-						EnumName:         e.EnumName,
-						EnumValue:        e.EnumValue,
-						EnumValueProcess: ev,
-						EnumComment:      e.EnumValue + " " + e.EnumName,
-					}
-					fieldEnum.EnumFieldValues = append(fieldEnum.EnumFieldValues, efv)
-				}
-				structTmpl.EnumFields = append(structTmpl.EnumFields, fieldEnum)
-			}
-		}
-	}
-
-	{
-		if _, err := w.Write([]byte(structFootTmpl)); err != nil {
-			return err
-		}
-	}
-	{
-		if _, err := hbuf.Write([]byte(helperStructFootTmpl)); err != nil {
-			return err
-		}
-	}
-	{
-		if _, err := shbuf.Write([]byte(structHelperFooter)); err != nil {
-			return err
-		}
-	}
-	{
-		if _, err := svbuf.Write([]byte(structValuesFooter)); err != nil {
-			return err
-		}
-	}
-	{
-		if _, err := svpbuf.Write([]byte(structValuePtrsFooter)); err != nil {
-			return err
-		}
-	}
-	{
-		if _, err := hhbuf.Write([]byte(helperMethodColsFooterTmpl)); err != nil {
-			return err
-		}
-	}
-
-	{
-		temp, err := template.New("structTableName").Parse(structTableNameTmpl)
-		if err != nil {
-			return err
-		}
-		if err := temp.Execute(w, map[string]any{
-			"StructName": name,
-			"TableName":  s.Name,
-		}); err != nil {
-			return err
-		}
-	}
-	{
-		// structColumn
-		temp, err := template.New("structColumn").Parse(structColumn)
-		if err != nil {
-			return err
-		}
-		if err := temp.Execute(w, map[string]any{
-			"StructName": name,
-			"TableName":  s.Name,
-		}); err != nil {
-			return err
-		}
-	}
-	{
-		if _, err := w.Write(svbuf.Bytes()); err != nil {
-			return err
-		}
-	}
-	{
-		if _, err := w.Write(svpbuf.Bytes()); err != nil {
-			return err
-		}
-	}
-	{
-		// structExists
-		temp, err := template.New("structExists").Parse(structExists)
-		if err != nil {
-			return err
-		}
-		if err := temp.Execute(w, map[string]any{
-			"StructName": name,
-			"TableName":  s.Name,
-		}); err != nil {
-			return err
-		}
-	}
-
-	{
-		if _, err := w.Write(hbuf.Bytes()); err != nil {
-			return err
-		}
-	}
-	{
-		// helperMethodFuzzTmpl
-		temp, err := template.New("structHead").Parse(helperMethodFuzzTmpl)
-		if err != nil {
-			return err
-		}
-		if err := temp.Execute(w, map[string]any{
-			"StructName":    name,
-			"StructComment": s.Comment,
-		}); err != nil {
-			return err
-		}
-	}
-	{
-		if _, err := w.Write(hhbuf.Bytes()); err != nil {
-			return err
-		}
-	}
-	{
-		if _, err := w.Write(shbuf.Bytes()); err != nil {
-			return err
-		}
-	}
-
-	if haveEnum {
-		tp, err := template.New("test").Parse(enumTmpl)
-		if err != nil {
-			return err
-		}
-		enumBuf := new(bytes.Buffer)
-		err = tp.Execute(enumBuf, structTmpl)
-		if err != nil {
-			return err
-		}
-		if _, err := w.Write(enumBuf.Bytes()); err != nil {
+		if err := temp.Execute(w, FromStruct(s, opt)); err != nil {
 			return err
 		}
 	}
@@ -881,7 +431,7 @@ func (s *Struct) GenData(w io.Writer, n int64, opt Option) error {
 			return err
 		}
 		if err := temp.Execute(w, map[string]any{
-			"TableName": s.Name,
+			"TableName": s.TableName,
 		}); err != nil {
 			return err
 		}

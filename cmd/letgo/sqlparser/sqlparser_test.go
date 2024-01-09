@@ -3,12 +3,9 @@ package sqlparser
 import (
 	"bytes"
 	"reflect"
-	"strconv"
 	"testing"
-	"text/template"
 
 	"github.com/andreyvit/diff"
-	"github.com/donnol/do"
 
 	_ "github.com/pingcap/tidb/types/parser_driver"
 )
@@ -86,11 +83,28 @@ func Test_parse(t *testing.T) {
 	}
 }
 
+type UserTable struct{}
+type _UserTableEnum struct {
+}
+
+func (UserTable) EnumHelper() _UserTableEnum {
+	e := _UserTableEnum{}
+
+	return e
+}
+
+var _ = func() struct{} {
+	e := UserTable{}.EnumHelper()
+	_ = e
+	return struct{}{}
+}()
+
 func TestStruct_Gen(t *testing.T) {
 	type fields struct {
-		Name    string
-		Comment string
-		Fields  []Field
+		TableName string
+		Name      string
+		Comment   string
+		Fields    []Field
 	}
 	type args struct {
 		opt Option
@@ -105,8 +119,9 @@ func TestStruct_Gen(t *testing.T) {
 		{
 			name: "1",
 			fields: fields{
-				Name:    "user_table",
-				Comment: "用户表",
+				Name:      "User",
+				TableName: "user_table",
+				Comment:   "用户表",
 				Fields: []Field{
 					{
 						Name:    "id",
@@ -148,7 +163,7 @@ func TestStruct_Gen(t *testing.T) {
 				"		Name string `json:\"name\" db:\"name\"` // 名称" + "\n" +
 				"		CreatedAt time.Time `json:\"createdAt\" db:\"created_at\"` // 创建时间" + "\n" +
 				"		UpdatedAt time.Time `json:\"updatedAt\" db:\"updated_at\"` // 更新时间" + "\n" +
-				"	}" + "\n" +
+				"	}" + "\n	\n" +
 				`	func (UserTable) TableName() string {
 		return "user_table"
 	}
@@ -159,29 +174,33 @@ func TestStruct_Gen(t *testing.T) {
 	
 	func (s UserTable) Values() []any {
 		return []any{
-	s.Id,
-	s.Name,
-	s.CreatedAt,
-	s.UpdatedAt,
-	
+			s.Id,
+			s.Name,
+			s.CreatedAt,
+			s.UpdatedAt,
 		}
 	}
 	
 	func (s *UserTable) ValuePtrs() []any {
 		return []any{
-	&s.Id,
-	&s.Name,
-	&s.CreatedAt,
-	&s.UpdatedAt,
-	
+			&s.Id,
+			&s.Name,
+			&s.CreatedAt,
+			&s.UpdatedAt,
 		}
 	}
+	
+	func (s UserTable) Exists() bool {
+		return s.Id != 0
+	}
+	
 	type _UserTableNameHelper struct {
 		Id string // field: id
 		Name string // field: name
 		CreatedAt string // field: created_at
 		UpdatedAt string // field: updated_at
 	}
+	
 	// FuzzWrap make v become %v%
 	func (_UserTableNameHelper) FuzzWrap(v string) string {
 		return "%" + v + "%"
@@ -189,33 +208,34 @@ func TestStruct_Gen(t *testing.T) {
 	
 	func (_UserTableNameHelper) Columns() []string {
 		return []string{
-	"id",
-	"name",
-	"created_at",
-	"updated_at",
-	
-			}
+			"id",
+			"name",
+			"created_at",
+			"updated_at",
 		}
+	}
 	
 	func (UserTable) NameHelper() _UserTableNameHelper {
 		return _UserTableNameHelper{
-	Id: "id",
-	Name: "name",
-	CreatedAt: "created_at",
-	UpdatedAt: "updated_at",
-	
+			Id: "id",
+			Name: "name",
+			CreatedAt: "created_at",
+			UpdatedAt: "updated_at",
 		}
 	}
-	`,
+	
+	
+`,
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Struct{
-				Name:    tt.fields.Name,
-				Comment: tt.fields.Comment,
-				Fields:  tt.fields.Fields,
+				Name:      tt.fields.Name,
+				TableName: tt.fields.TableName,
+				Comment:   tt.fields.Comment,
+				Fields:    tt.fields.Fields,
 			}
 			w := &bytes.Buffer{}
 			if err := s.Gen(w, tt.args.opt); (err != nil) != tt.wantErr {
@@ -251,8 +271,9 @@ updated_at timestamp not null comment '更新时间'
 ) comment '用户表'`,
 			},
 			want: &Struct{
-				Name:    "user",
-				Comment: "用户表",
+				Name:      "",
+				TableName: "user",
+				Comment:   "用户表",
 				Fields: []Field{
 					{Name: "id", DBField: "id", Type: "int unsigned", Tag: "", Comment: "id"},
 					{Name: "name", DBField: "name", Type: "varchar", Tag: "", Comment: "名称"},
@@ -267,7 +288,7 @@ updated_at timestamp not null comment '更新时间'
 				"		Name string `json:\"name\" db:\"name\"` // 名称" + "\n" +
 				"		CreatedAt time.Time `json:\"createdAt\" db:\"created_at\"` // 创建时间" + "\n" +
 				"		UpdatedAt time.Time `json:\"updatedAt\" db:\"updated_at\"` // 更新时间" + "\n" +
-				"	}" + "\n" +
+				"	}" + "\n	\n" +
 				`	func (User) TableName() string {
 		return "user"
 	}
@@ -278,29 +299,33 @@ updated_at timestamp not null comment '更新时间'
 	
 	func (s User) Values() []any {
 		return []any{
-	s.Id,
-	s.Name,
-	s.CreatedAt,
-	s.UpdatedAt,
-	
+			s.Id,
+			s.Name,
+			s.CreatedAt,
+			s.UpdatedAt,
 		}
 	}
 	
 	func (s *User) ValuePtrs() []any {
 		return []any{
-	&s.Id,
-	&s.Name,
-	&s.CreatedAt,
-	&s.UpdatedAt,
-	
+			&s.Id,
+			&s.Name,
+			&s.CreatedAt,
+			&s.UpdatedAt,
 		}
 	}
+	
+	func (s User) Exists() bool {
+		return s.Id != 0
+	}
+	
 	type _UserNameHelper struct {
 		Id string // field: id
 		Name string // field: name
 		CreatedAt string // field: created_at
 		UpdatedAt string // field: updated_at
 	}
+	
 	// FuzzWrap make v become %v%
 	func (_UserNameHelper) FuzzWrap(v string) string {
 		return "%" + v + "%"
@@ -308,24 +333,24 @@ updated_at timestamp not null comment '更新时间'
 	
 	func (_UserNameHelper) Columns() []string {
 		return []string{
-	"id",
-	"name",
-	"created_at",
-	"updated_at",
-	
-			}
+			"id",
+			"name",
+			"created_at",
+			"updated_at",
 		}
+	}
 	
 	func (User) NameHelper() _UserNameHelper {
 		return _UserNameHelper{
-	Id: "id",
-	Name: "name",
-	CreatedAt: "created_at",
-	UpdatedAt: "updated_at",
-	
+			Id: "id",
+			Name: "name",
+			CreatedAt: "created_at",
+			UpdatedAt: "updated_at",
 		}
 	}
-	`,
+	
+	
+`,
 		},
 		{
 			name: "ignoreField",
@@ -341,8 +366,9 @@ updated_at timestamp not null comment '更新时间'
 				},
 			},
 			want: &Struct{
-				Name:    "user",
-				Comment: "用户表",
+				Name:      "",
+				TableName: "user",
+				Comment:   "用户表",
 				Fields: []Field{
 					{Name: "id", DBField: "id", Type: "int unsigned", Tag: "", Comment: "id"},
 					{Name: "name", DBField: "name", Type: "varchar", Tag: "", Comment: "名称"},
@@ -356,7 +382,7 @@ updated_at timestamp not null comment '更新时间'
 				"		Id uint `json:\"id\" db:\"id\"` // id" + "\n" +
 				"		Name string `json:\"name\" db:\"name\"` // 名称" + "\n" +
 				"		CreatedAt time.Time `json:\"createdAt\" db:\"created_at\"` // 创建时间" + "\n" +
-				"	}" + "\n" +
+				"	}" + "\n	\n" +
 				`	func (User) TableName() string {
 		return "user"
 	}
@@ -367,26 +393,30 @@ updated_at timestamp not null comment '更新时间'
 	
 	func (s User) Values() []any {
 		return []any{
-	s.Id,
-	s.Name,
-	s.CreatedAt,
-	
+			s.Id,
+			s.Name,
+			s.CreatedAt,
 		}
 	}
 	
 	func (s *User) ValuePtrs() []any {
 		return []any{
-	&s.Id,
-	&s.Name,
-	&s.CreatedAt,
-	
+			&s.Id,
+			&s.Name,
+			&s.CreatedAt,
 		}
 	}
+	
+	func (s User) Exists() bool {
+		return s.Id != 0
+	}
+	
 	type _UserNameHelper struct {
 		Id string // field: id
 		Name string // field: name
 		CreatedAt string // field: created_at
 	}
+	
 	// FuzzWrap make v become %v%
 	func (_UserNameHelper) FuzzWrap(v string) string {
 		return "%" + v + "%"
@@ -394,22 +424,22 @@ updated_at timestamp not null comment '更新时间'
 	
 	func (_UserNameHelper) Columns() []string {
 		return []string{
-	"id",
-	"name",
-	"created_at",
-	
-			}
+			"id",
+			"name",
+			"created_at",
 		}
+	}
 	
 	func (User) NameHelper() _UserNameHelper {
 		return _UserNameHelper{
-	Id: "id",
-	Name: "name",
-	CreatedAt: "created_at",
-	
+			Id: "id",
+			Name: "name",
+			CreatedAt: "created_at",
 		}
 	}
-	`,
+	
+	
+`,
 		},
 	}
 	for _, tt := range tests {
@@ -548,7 +578,7 @@ func TestParseCreateSQLBatch(t *testing.T) {
 				`,
 			},
 			want: []*Struct{
-				{Name: "user", Fields: []Field{
+				{TableName: "user", Fields: []Field{
 					{
 						Name:    "id",
 						Type:    "int",
@@ -570,7 +600,7 @@ func TestParseCreateSQLBatch(t *testing.T) {
 						DBField: "updated_at",
 					},
 				}},
-				{Name: "role", Fields: []Field{
+				{TableName: "role", Fields: []Field{
 					{
 						Name:    "id",
 						Type:    "int",
@@ -653,163 +683,4 @@ func Test_processFieldType(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestStruct(t *testing.T) {
-	tp, err := template.New("test").Parse(enumTmpl)
-	if err != nil {
-		t.Fatal(err)
-	}
-	buf := new(bytes.Buffer)
-	err = tp.Execute(buf, StructForTmpl{
-		StructName: "User",
-		Fields: []StructField{
-			{
-				FieldName:    "Id",
-				FieldType:    "uint64",
-				FieldComment: "// id",
-			},
-			{
-				FieldName:    "Status",
-				FieldType:    "int",
-				FieldComment: "状态: enum(0 未知;1 有效;2 无效)",
-			},
-			{
-				FieldName:    "Type",
-				FieldType:    "string",
-				FieldComment: "类型: enum(admin 管理员;user 用户)",
-			},
-		},
-		EnumFields: []EnumField{
-			{
-				StructField: StructField{
-					FieldName:    "Status",
-					FieldType:    "int",
-					FieldComment: "状态: enum(0 未知;1 有效;2 无效)",
-				},
-				EnumFieldValues: []EnumFieldValue{
-					{
-						StructField: StructField{
-							FieldName:    "Status",
-							FieldType:    "int",
-							FieldComment: "状态: enum(0 未知;1 有效;2 无效)",
-						},
-						EnumName:         "未知",
-						EnumValue:        "0",
-						EnumValueProcess: "0",
-						EnumComment:      "0 未知",
-					},
-					{
-						StructField: StructField{
-							FieldName:    "Status",
-							FieldType:    "int",
-							FieldComment: "状态: enum(0 未知;1 有效;2 无效)",
-						},
-						EnumName:         "有效",
-						EnumValue:        "1",
-						EnumValueProcess: "1",
-						EnumComment:      "1 有效",
-					},
-					{
-						StructField: StructField{
-							FieldName:    "Status",
-							FieldType:    "int",
-							FieldComment: "状态: enum(0 未知;1 有效;2 无效)",
-						},
-						EnumName:         "无效",
-						EnumValue:        "2",
-						EnumValueProcess: "2",
-						EnumComment:      "2 无效",
-					},
-				},
-			},
-			{
-				StructField: StructField{
-					FieldName:    "Type",
-					FieldType:    "string",
-					FieldComment: "类型: enum(admin 管理员;user 用户)",
-				},
-				EnumFieldValues: []EnumFieldValue{
-					{
-						StructField: StructField{
-							FieldName:    "Type",
-							FieldType:    "string",
-							FieldComment: "类型: enum(admin 管理员;user 用户)",
-						},
-						EnumName:         "管理员",
-						EnumValue:        "admin",
-						EnumValueProcess: strconv.Quote("admin"),
-						EnumComment:      "admin 管理员",
-					},
-					{
-						StructField: StructField{
-							FieldName:    "Type",
-							FieldType:    "string",
-							FieldComment: "类型: enum(admin 管理员;user 用户)",
-						},
-						EnumName:         "用户",
-						EnumValue:        "user",
-						EnumValueProcess: strconv.Quote("user"),
-						EnumComment:      "user 用户",
-					},
-				},
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// t.Log(buf.String())
-	want := `type _UserEnum struct {
-
-		Status struct {
-
-			E_0 do.Enum[int] // 0 未知
-			E_1 do.Enum[int] // 1 有效
-			E_2 do.Enum[int] // 2 无效
-	} // 状态: enum(0 未知;1 有效;2 无效)
-		Type struct {
-
-			E_admin do.Enum[string] // admin 管理员
-			E_user do.Enum[string] // user 用户
-	} // 类型: enum(admin 管理员;user 用户)
-}
-
-func (User) EnumHelper() _UserEnum {
-	e := _UserEnum{}
-
-
-			e.Status.E_0 = do.Enum[int]{Name: "未知", Value: 0}
-			e.Status.E_1 = do.Enum[int]{Name: "有效", Value: 1}
-			e.Status.E_2 = do.Enum[int]{Name: "无效", Value: 2}
-
-			e.Type.E_admin = do.Enum[string]{Name: "管理员", Value: "admin"}
-			e.Type.E_user = do.Enum[string]{Name: "用户", Value: "user"}
-	return e
-}
-
-var _ = func() struct{} {
-	e := User{}.EnumHelper()
-
-
-			if e.Status.E_0.Value != 0 || e.Status.E_0.Name != "未知" {
-				panic("invalid enum")
-			}
-			if e.Status.E_1.Value != 1 || e.Status.E_1.Name != "有效" {
-				panic("invalid enum")
-			}
-			if e.Status.E_2.Value != 2 || e.Status.E_2.Name != "无效" {
-				panic("invalid enum")
-			}
-
-			if e.Type.E_admin.Value != "admin" || e.Type.E_admin.Name != "管理员" {
-				panic("invalid enum")
-			}
-			if e.Type.E_user.Value != "user" || e.Type.E_user.Name != "用户" {
-				panic("invalid enum")
-			}
-	return struct{}{}
-}`
-	do.Assert(t, diff.TrimLinesInString(buf.String()), diff.TrimLinesInString(want), diff.LineDiff(buf.String(), want))
 }
