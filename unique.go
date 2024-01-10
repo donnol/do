@@ -25,3 +25,26 @@ func In[S comparable](s []S, e S) bool {
 	}
 	return false
 }
+
+func First[T any](s []T) (t T, ok bool) {
+	if len(s) == 0 {
+		return
+	}
+	return s[0], true
+}
+
+func Last[T any](s []T) (t T, ok bool) {
+	l := len(s)
+	if l == 0 {
+		return
+	}
+	return s[l-1], true
+}
+
+func Index[T any](s []T, i int) (t T, ok bool) {
+	l := len(s)
+	if l == 0 || i > l-1 {
+		return
+	}
+	return s[i], true
+}

@@ -131,8 +131,8 @@ func ptrCase() (int, *int) {
 	return a, &a
 }
 
-// Pointer return a pointer of type T
-func Pointer[T any]() *T { return new(T) }
+// PtrTo [deprecate] return pointer of a new value copied from v
+func PtrTo[T any](v T) *T { return &v }
 
 func TestPtr2(t *testing.T) {
 	var a = 1
@@ -146,18 +146,27 @@ func TestPtr2(t *testing.T) {
 	ap3 := Pointer[int]()
 
 	// 可以看到，指针值不同，但reflect.DeepEqual比较时返回true
-	t.Log(ap, ap1, ap2, ap3, reflect.DeepEqual(ap, ap2), reflect.DeepEqual(ap, ap3)) // 0xc00012e108 0xc00012e108 0xc00012e140 0xc00012e148 true false
+	// t.Log(ap, ap1, ap2, ap3, reflect.DeepEqual(ap, ap2), reflect.DeepEqual(ap, ap3)) // 0xc00012e108 0xc00012e108 0xc00012e140 0xc00012e148 true false
+	Assert(t, ap == ap1, true)
+	Assert(t, ap == ap2, false)
+	Assert(t, ap == ap3, false)
+	Assert(t, reflect.DeepEqual(ap, ap2), true)
+	Assert(t, reflect.DeepEqual(ap, ap1), true)
+	Assert(t, reflect.DeepEqual(ap, ap3), false)
 
 	// 使用new确保不会报空指针错误
 	ip := new(int) // Recommand
-	t.Log(ip, *ip) // 0xc0000266f0 0
+	// t.Log(ip, *ip) // 0xc0000266f0 0
+	Assert(t, *ip, 0)
 	*ip = 1
-	t.Log(ip, *ip) // 0xc0000266f0 0
+	// t.Log(ip, *ip) // 0xc0000266f0 0
+	Assert(t, *ip, 1)
 
 	// 这样声明，容易报空指针错误
 	var ii *int
-	t.Log(ii) // <nil>
+	// t.Log(ii) // <nil>
 	// t.Log(*ii) // panic: runtime error: invalid memory address or nil pointer
+	Assert(t, ii, nil)
 }
 
 type I interface {

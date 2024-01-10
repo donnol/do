@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
 // Go run f in a new goroutine with defer recover
@@ -33,6 +34,7 @@ func TestGo(t *testing.T) {
 	})
 
 	wg.Wait()
+	time.Sleep(100 * time.Millisecond)
 	Must(bw.Flush())
 
 	Assert(t, strings.Contains(output.String(), "panic stack:"), true, "output is %s", output)
@@ -62,6 +64,7 @@ func TestGoR(t *testing.T) {
 	})
 
 	wg.Wait()
+	time.Sleep(100 * time.Millisecond)
 	Must(bw.Flush())
 
 	r := <-ch

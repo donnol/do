@@ -53,7 +53,7 @@ func TestAssert(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			wantBuf: "Bad case, 0 != 1, msg need help",
+			wantBuf: "[/home/jd/Project/jd/do/assert_test.go:61] Bad case, 0 != 1, msg need help",
 		},
 	}
 	for _, tt := range tests {
