@@ -162,3 +162,15 @@ func TestParseTime(t *testing.T) {
 		})
 	}
 }
+
+func TestNowTwice(t *testing.T) {
+	n1 := time.Now()
+	n2 := time.Now()
+	_, _ = n1, n2
+
+	// 大概率相等，也会有不相等的出现
+	// Assert(t, !n2.Before(n1), true)
+	// Assert(t, n1.UnixMilli(), n2.UnixMilli())
+	// Assert(t, n1.UnixMicro(), n2.UnixMicro())
+	// Assert(t, n1.String(), n2.String())
+}
