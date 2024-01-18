@@ -48,12 +48,19 @@ func Event[I, O, R any](
 	success PipeFunc[O, R],
 	failed PipeFunc[E, R],
 ) (r R, err E) {
-	o, berr := do(ctx, param)
-	if berr != nil {
-		r, err = failed(ctx, berr)
-	} else {
-		r, err = success(ctx, o)
-	}
+	var o O
+	var berr E
+
+	defer func() {
+		if berr != nil {
+			r, err = failed(ctx, berr)
+		} else {
+			r, err = success(ctx, o)
+		}
+	}()
+
+	o, berr = do(ctx, param)
+
 	return
 }
 
