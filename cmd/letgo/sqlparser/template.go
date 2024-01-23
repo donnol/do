@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/iancoleman/strcase"
 	"github.com/samber/lo"
 )
 
@@ -225,5 +226,39 @@ func FromStruct(s *Struct, opt Option) StructForTmpl {
 		Fields:        fields,
 		EnumFields:    efields,
 		HaveEnum:      s.HaveEnum,
+	}
+}
+
+const (
+	ResultToJSONObjectTmpl = `json_object(
+		{{- range $k,$v := .Fields}}
+		'{{$v.JSONName}}', {{$v.ColumnName -}} {{- if $v.NoComma}} {{- else}},{{- end}}
+		{{- end}}
+	)`
+)
+
+type ResultToJSONObject struct {
+	Fields []ResultToJSONObjectField
+}
+
+type ResultToJSONObjectField struct {
+	JSONName   string
+	ColumnName string
+	NoComma    bool
+}
+
+func FromStructForTmpl(s *StructForTmpl) *ResultToJSONObject {
+	fields := make([]ResultToJSONObjectField, 0, len(s.Fields))
+	for i, field := range s.Fields {
+		jname := strcase.ToCamel(field.DBField)
+		jname = strings.ToLower(string(jname[0])) + jname[1:]
+		fields = append(fields, ResultToJSONObjectField{
+			JSONName:   jname,
+			ColumnName: field.DBField,
+			NoComma:    i == len(s.Fields)-1,
+		})
+	}
+	return &ResultToJSONObject{
+		Fields: fields,
 	}
 }

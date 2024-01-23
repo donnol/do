@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"reflect"
 	"testing"
+	"text/template"
 
 	"github.com/andreyvit/diff"
+	"github.com/donnol/do"
 
 	_ "github.com/pingcap/tidb/types/parser_driver"
 )
@@ -683,4 +685,74 @@ func Test_processFieldType(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestResultToJSONObjectTmpl(t *testing.T) {
+	tmpl, err := template.New("resultToJSONObjectTmpl").Parse(ResultToJSONObjectTmpl)
+	if err != nil {
+		t.Error(err)
+	}
+
+	buf := new(bytes.Buffer)
+	err = tmpl.Execute(buf, ResultToJSONObject{
+		Fields: []ResultToJSONObjectField{
+			{
+				JSONName:   "id",
+				ColumnName: "id",
+				NoComma:    false,
+			},
+			{
+				JSONName:   "name",
+				ColumnName: "name",
+				NoComma:    false,
+			},
+			{
+				JSONName:   "createTime",
+				ColumnName: "create_time",
+				NoComma:    true,
+			},
+		},
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	want := `json_object(
+		'id', id,
+		'name', name,
+		'createTime', create_time
+	)`
+	do.Assert(t, buf.String(), want, diff.LineDiff(buf.String(), want))
+}
+
+func TestResultToJSONObjectTmpl2(t *testing.T) {
+	tmpl, err := template.New("resultToJSONObjectTmpl").Parse(ResultToJSONObjectTmpl)
+	if err != nil {
+		t.Error(err)
+	}
+
+	buf := new(bytes.Buffer)
+	err = tmpl.Execute(buf, FromStructForTmpl(&StructForTmpl{
+		Fields: []StructField{
+			{
+				DBField: "id",
+			},
+			{
+				DBField: "name",
+			},
+			{
+				DBField: "create_time",
+			},
+		},
+	}))
+	if err != nil {
+		t.Error(err)
+	}
+
+	want := `json_object(
+		'id', id,
+		'name', name,
+		'createTime', create_time
+	)`
+	do.Assert(t, buf.String(), want, diff.LineDiff(buf.String(), want))
 }
