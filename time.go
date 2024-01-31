@@ -1,6 +1,8 @@
 package do
 
-import "time"
+import (
+	"time"
+)
 
 const (
 	DateTimeFormat = "2006-01-02 15:04:05"
@@ -61,5 +63,45 @@ func ParseTime(t string, layouts ...string) (r time.Time, err error) {
 			return
 		}
 	}
+	return
+}
+
+// AgeByBirth get age and unit by birthday. It will use time.Now() if not input now.
+// If exist year, ignore month and day; If exist month, ignore day.
+func AgeByBirth(birthday time.Time, now ...time.Time) (age int, unit string) {
+	var nt time.Time
+	if len(now) == 0 {
+		nt = time.Now()
+	} else {
+		nt = now[0]
+	}
+
+	// 拿到时间间隔
+	bd := nt.Sub(birthday)
+	if bd < 0 {
+		return
+	}
+	if bd == 0 {
+		age = 1
+		unit = "天"
+	}
+
+	zero := time.Time{}
+	ny, nm, nd := zero.Date() // 1 1 1
+
+	y, m, d := zero.Add(bd).Date()
+	ry, rm, rd := y-ny, m-nm, d-nd
+
+	if ry > 0 {
+		age = ry
+		unit = "岁"
+	} else if rm > 0 {
+		age = int(rm)
+		unit = "月"
+	} else if rd > 0 {
+		age = rd
+		unit = "天"
+	}
+
 	return
 }

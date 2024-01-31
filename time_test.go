@@ -174,3 +174,123 @@ func TestNowTwice(t *testing.T) {
 	// Assert(t, n1.UnixMicro(), n2.UnixMicro())
 	// Assert(t, n1.String(), n2.String())
 }
+
+func TestAgeByBirth(t *testing.T) {
+	type args struct {
+		birthday time.Time
+		now      []time.Time
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantAge  int
+		wantUnit string
+	}{
+		// TODO: Add test cases.
+		{
+			name: "2y",
+			args: args{
+				birthday: time.Date(2022, 01, 22, 0, 0, 0, 0, time.Local),
+				now: []time.Time{
+					time.Date(2024, 01, 22, 0, 0, 0, 0, time.Local),
+				},
+			},
+			wantAge:  2,
+			wantUnit: "岁",
+		},
+		{
+			name: "2y",
+			args: args{
+				birthday: time.Date(2022, 01, 22, 0, 0, 0, 0, time.Local),
+				now: []time.Time{
+					time.Date(2024, 01, 21, 0, 0, 0, 0, time.Local),
+				},
+			},
+			wantAge:  1,
+			wantUnit: "岁",
+		},
+		{
+			name: "1y",
+			args: args{
+				birthday: time.Date(2023, 01, 22, 0, 0, 0, 0, time.Local),
+				now:      []time.Time{time.Date(2024, 1, 22, 0, 0, 0, 0, time.Local)},
+			},
+			wantAge:  1,
+			wantUnit: "岁",
+		},
+		{
+			name: "未足年",
+			args: args{
+				birthday: time.Date(2023, 01, 22, 0, 0, 0, 0, time.Local),
+				now:      []time.Time{time.Date(2024, 1, 21, 0, 0, 0, 0, time.Local)},
+			},
+			wantAge:  11,
+			wantUnit: "月",
+		},
+		{
+			name: "未足年",
+			args: args{
+				birthday: time.Date(2023, 02, 22, 0, 0, 0, 0, time.Local),
+				now:      []time.Time{time.Date(2024, 1, 22, 0, 0, 0, 0, time.Local)},
+			},
+			wantAge:  11,
+			wantUnit: "月",
+		},
+		{
+			name: "1m",
+			args: args{
+				birthday: time.Date(2023, 12, 22, 0, 0, 0, 0, time.Local),
+				now:      []time.Time{time.Date(2024, 1, 22, 0, 0, 0, 0, time.Local)},
+			},
+			wantAge:  1,
+			wantUnit: "月",
+		},
+		{
+			name: "1m",
+			args: args{
+				birthday: time.Date(2023, 11, 22, 0, 0, 0, 0, time.Local),
+				now:      []time.Time{time.Date(2023, 12, 22, 0, 0, 0, 0, time.Local)},
+			},
+			wantAge:  30,
+			wantUnit: "天",
+		},
+		{
+			name: "1d",
+			args: args{
+				birthday: time.Date(2024, 01, 21, 0, 0, 0, 0, time.Local),
+				now:      []time.Time{time.Date(2024, 1, 22, 0, 0, 0, 0, time.Local)},
+			},
+			wantAge:  1,
+			wantUnit: "天",
+		},
+		{
+			name: "1d",
+			args: args{
+				birthday: time.Date(2024, 01, 22, 0, 0, 0, 0, time.Local),
+				now:      []time.Time{time.Date(2024, 1, 22, 0, 0, 0, 0, time.Local)},
+			},
+			wantAge:  1,
+			wantUnit: "天",
+		},
+		{
+			name: "rev",
+			args: args{
+				birthday: time.Date(2024, 01, 22, 0, 0, 0, 0, time.Local),
+				now:      []time.Time{time.Date(2024, 1, 21, 0, 0, 0, 0, time.Local)},
+			},
+			wantAge:  0,
+			wantUnit: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotAge, gotUnit := AgeByBirth(tt.args.birthday, tt.args.now...)
+			if gotAge != tt.wantAge {
+				t.Errorf("AgeByBirth() gotAge = %v, want %v", gotAge, tt.wantAge)
+			}
+			if gotUnit != tt.wantUnit {
+				t.Errorf("AgeByBirth() gotUnit = %v, want %v", gotUnit, tt.wantUnit)
+			}
+		})
+	}
+}
