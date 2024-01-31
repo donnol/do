@@ -103,8 +103,8 @@ github.com/dgraph-io/ristretto v0.1.1-0.20220403145359-8e850b710d6d h1:Wrc3UKTS+
 github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2/go.mod h1:SqUrOPUnsFjfmXRMNPybcSiG0BgUW2AuFH8PAnS2iTw=
 github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 h1:fAjc9m62+UWV/WAFKLNi6ZS0675eEUC9y3AlwSbQu1Y=
 github.com/docker/go-units v0.4.0 h1:3uh0PgVws3nIA0Q+MwDC8yjEPf9zjRfZZWXZYDct3Tw=
-github.com/donnol/do v0.96.0 h1:Za3vZEKQphfQlCOD4cA9hPMNSlMKGNFFnor4hNOLFP0=
-github.com/donnol/do v0.96.0/go.mod h1:/drBgwpmSlqq0ZiA+HQHcRWZnXMFUPYX/u0upWAYcss=
+github.com/donnol/do v1.0.0 h1:yqy6vQ6ahkPuHYoRYBiq+z/DwsWbfsqF4SENXBtHCDM=
+github.com/donnol/do v1.0.0/go.mod h1:/drBgwpmSlqq0ZiA+HQHcRWZnXMFUPYX/u0upWAYcss=
 github.com/dustin/go-humanize v1.0.0 h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4zYo=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
