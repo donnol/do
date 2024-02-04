@@ -2,6 +2,7 @@ package sqlparser
 
 import (
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 
@@ -304,6 +305,10 @@ type InsertFieldValue struct {
 	NoDot      bool
 }
 
+var (
+	insertValues = make(map[string]map[string][]string)
+)
+
 func InsertParamFromStruct(s *Struct, opt *Option) *InsertParam {
 	opt.fillByDefault()
 
@@ -324,12 +329,29 @@ func InsertParamFromStruct(s *Struct, opt *Option) *InsertParam {
 			if opt.FieldTypeMapper != nil {
 				fieldType = opt.FieldTypeMapper(fieldType)
 			}
-			// TODO: 当字段关联其它表时，输入已生成记录的id列表，从中任选一个 -- ref(table.id)
-			value := valueByType(fieldType)
+			// 当字段关联其它表时，输入已生成记录的id列表，从中任选一个 -- ref(table.id)
+			choose := []string{}
+			if iv, ok := insertValues[field.Ref.Table]; ok {
+				vv, ok := iv[field.Ref.Field]
+				if ok {
+					choose = vv
+				}
+			}
+			var value string
+			if len(choose) != 0 {
+				value = choose[rand.Intn(len(choose))]
+			} else {
+				value = valueByType(fieldType)
+			}
 			fieldValues = append(fieldValues, InsertFieldValue{
 				FieldValue: value,
 				NoDot:      j == len(s.Fields)-1,
 			})
+
+			if _, ok := insertValues[s.TableName]; !ok {
+				insertValues[s.TableName] = make(map[string][]string)
+			}
+			insertValues[s.TableName][field.DBField] = append(insertValues[s.TableName][field.DBField], value)
 		}
 
 		values = append(values, InsertValue{

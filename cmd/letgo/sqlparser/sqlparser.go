@@ -126,12 +126,17 @@ type Field struct {
 	Type    string
 	Tag     string
 	DBField string
+	Ref     Ref
 	Comment string
 	Enums   []Enum
 }
 type Enum struct {
 	EnumName  string
 	EnumValue string
+}
+type Ref struct {
+	Table string
+	Field string
 }
 
 func (v *Struct) Enter(in ast.Node) (ast.Node, bool) {
@@ -186,6 +191,22 @@ func (v *Struct) Enter(in ast.Node) (ast.Node, bool) {
 							})
 						}
 						// fmt.Printf("%+v\n", field.Enums)
+					}
+					{
+						const bs = "ref("
+						bi := strings.Index(field.Comment, bs)
+						ei := strings.LastIndex(field.Comment, ")")
+						if bi != -1 && ei != -1 && bi < ei {
+							es := field.Comment[bi+len(bs) : ei]
+							parts := strings.Split(es, ".")
+							fmt.Println(parts)
+							if len(parts) == 2 {
+								field.Ref = Ref{
+									Table: parts[0],
+									Field: parts[1],
+								}
+							}
+						}
 					}
 				case ast.ColumnOptionGenerated:
 				case ast.ColumnOptionReference:
