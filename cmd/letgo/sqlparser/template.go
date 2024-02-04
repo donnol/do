@@ -324,7 +324,7 @@ func InsertParamFromStruct(s *Struct, opt *Option) *InsertParam {
 			if opt.FieldTypeMapper != nil {
 				fieldType = opt.FieldTypeMapper(fieldType)
 			}
-			// TODO: 当字段关联其它表时，输入已生成记录的id列表，从中任选一个 -- foreignKey(table.id)
+			// TODO: 当字段关联其它表时，输入已生成记录的id列表，从中任选一个 -- ref(table.id)
 			value := valueByType(fieldType)
 			fieldValues = append(fieldValues, InsertFieldValue{
 				FieldValue: value,
