@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/donnol/do"
 	"github.com/iancoleman/strcase"
 	"github.com/samber/lo"
 )
@@ -261,4 +263,128 @@ func FromStructForTmpl(s *StructForTmpl) *ResultToJSONObject {
 	return &ResultToJSONObject{
 		Fields: fields,
 	}
+}
+
+const (
+	SqlInsertTmpl = `
+	INSERT {{if .Ignore}}IGNORE{{end}} INTO {{.Table}} (
+		{{- range $k,$v:=.Fields -}}
+			{{$v.Name}}{{if $v.NoDot}}{{else}}, {{end -}}
+		{{- end -}}
+	) VALUES 
+	{{- range $vk, $vv:=.Values}}
+	(
+		{{- range $ik, $iv := $vv.FieldValues -}}
+			{{$iv.FieldValue}}{{if $iv.NoDot}}{{else}}, {{end -}}
+		{{- end -}}
+	){{if $vv.NoDot}};{{else}}, {{end -}}
+	{{end -}}
+	`
+)
+
+type InsertParam struct {
+	Ignore bool
+	Table  string
+	Fields []InsertField
+	Values []InsertValue
+}
+
+type InsertField struct {
+	Name  string
+	NoDot bool
+}
+
+type InsertValue struct {
+	FieldValues []InsertFieldValue
+	NoDot       bool
+}
+
+type InsertFieldValue struct {
+	FieldValue string
+	NoDot      bool
+}
+
+func InsertParamFromStruct(s *Struct, opt *Option) *InsertParam {
+	opt.fillByDefault()
+
+	fields := make([]InsertField, 0, len(s.Fields))
+	values := make([]InsertValue, 0, len(s.Fields))
+
+	for i, field := range s.Fields {
+		fields = append(fields, InsertField{
+			Name:  field.DBField,
+			NoDot: i == len(s.Fields)-1,
+		})
+	}
+
+	for i := 0; i < opt.Amount; i++ {
+		fieldValues := make([]InsertFieldValue, 0, len(s.Fields))
+		for j, field := range s.Fields {
+			fieldType := field.Type
+			if opt.FieldTypeMapper != nil {
+				fieldType = opt.FieldTypeMapper(fieldType)
+			}
+			// TODO: 当字段关联其它表时，输入已生成记录的id列表，从中任选一个 -- foreignKey(table.id)
+			value := valueByType(fieldType)
+			fieldValues = append(fieldValues, InsertFieldValue{
+				FieldValue: value,
+				NoDot:      j == len(s.Fields)-1,
+			})
+		}
+
+		values = append(values, InsertValue{
+			FieldValues: fieldValues,
+			NoDot:       i == opt.Amount-1,
+		})
+	}
+
+	return &InsertParam{
+		Ignore: true,
+		Table:  s.TableName,
+		Fields: fields,
+		Values: values,
+	}
+}
+
+func valueByType(typ string) string {
+	switch typ {
+	case "bool":
+		if gofakeit.Bool() {
+			return "1"
+		} else {
+			return "0"
+		}
+	case "int":
+		return strconv.FormatInt(int64(gofakeit.Int32()), 10)
+	case "int64":
+		return strconv.FormatInt(gofakeit.Int64(), 10)
+	case "uint":
+		return strconv.FormatUint(uint64(gofakeit.Uint32()), 10)
+	case "uint64":
+		return strconv.FormatUint(gofakeit.Uint64(), 10)
+	case "uint16":
+		return strconv.FormatUint(uint64(gofakeit.Uint16()), 10)
+	case "int16":
+		return strconv.FormatInt(int64(gofakeit.Int16()), 10)
+	case "uint8":
+		return strconv.FormatUint(uint64(gofakeit.Uint8()), 10)
+	case "int8":
+		return strconv.FormatInt(int64(gofakeit.Int8()), 10)
+	case "float64":
+		return strconv.FormatFloat(gofakeit.Float64(), 'e', 2, 64)
+	case "float32":
+		return strconv.FormatFloat(float64(gofakeit.Float32()), 'e', 2, 64)
+	case "string", "[]byte":
+		return withQuote(gofakeit.Name())
+	case "json.RawMessage":
+		j := do.Must1(gofakeit.JSON(nil))
+		return withQuote(string(j))
+	case "time.Time":
+		return withQuote(gofakeit.Date().Format(do.DateTimeFormat))
+	}
+	return withQuote(gofakeit.Name())
+}
+
+func withQuote(s string) string {
+	return `'` + s + `'`
 }

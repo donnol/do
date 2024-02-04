@@ -237,8 +237,94 @@ var (
 			},
 			Subcommands: []*cli.Command{
 				{
+					Name:        "insert",
+					Usage:       "letgo sql2struct insert 'create table user(id int not null)'",
+					Description: "Generate insert sql about table",
+					Flags: []cli.Flag{
+						&cli.IntFlag{
+							Name:  "amount",
+							Usage: "specify insert sql amount",
+						},
+					},
+					Action: func(c *cli.Context) (err error) {
+						ignoreField := c.String("ignore")
+						file := c.String("file")
+						output := c.String("output")
+						tp := c.String("tablePrefix")
+						amount := c.Int("amount")
+
+						sql := ""
+						if len(c.Args().Slice()) > 0 {
+							sql = c.Args().Slice()[0]
+						} else if file != "" {
+							data, err := os.ReadFile(file)
+							if err != nil {
+								fmt.Printf("read file failed: %v\n", err)
+								os.Exit(1)
+							}
+							sql = string(data)
+						}
+
+						if sql == "" {
+							fmt.Printf("please specify sql like 'create table user(id int not null)' or input file by --file=xxx.sql\n")
+							os.Exit(1)
+						}
+
+						opt := &sqlparser.Option{
+							Amount: amount,
+						}
+						if ignoreField != "" {
+							opt.IgnoreField = append(opt.IgnoreField, ignoreField)
+						}
+						if tp != "" {
+							opt.TrimTablePrefix = tp
+						}
+
+						ss := sqlparser.ParseCreateSQLBatch(sql)
+						if ss == nil {
+							fmt.Printf("parse sql failed\n")
+							os.Exit(1)
+						}
+
+						w := os.Stdout
+						if output != "" {
+							f, err := os.OpenFile(output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, os.ModePerm)
+							if err != nil {
+								fmt.Printf("open file %s failed: %v\n", output, err)
+								os.Exit(1)
+							}
+							defer f.Close()
+
+							w = f
+						}
+
+						tmpl, err := template.New("sqlInsert").Parse(sqlparser.SqlInsertTmpl)
+						if err != nil {
+							log.Fatal(err)
+						}
+
+						buf := new(bytes.Buffer)
+						for _, s := range ss {
+							tt := sqlparser.InsertParamFromStruct(s, opt)
+							err = tmpl.Execute(buf, tt)
+							if err != nil {
+								log.Fatal(err)
+							}
+						}
+
+						_, err = w.Write(buf.Bytes())
+						if err != nil {
+							fmt.Printf("write to w failed: %v\n", err)
+							os.Exit(1)
+						}
+						fmt.Println()
+
+						return
+					},
+				},
+				{
 					Name:  "sqlfunc",
-					Usage: "letgo sqlfunc 'create table user(id int not null)'",
+					Usage: "letgo sql2struct sqlfunc 'create table user(id int not null)'",
 					Flags: []cli.Flag{
 						&cli.StringFlag{
 							Name:  "json_object",

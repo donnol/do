@@ -221,6 +221,8 @@ type Option struct {
 	FieldTagMapper         func(string, string) string // 可根据名称和类型自行决定字段tag
 	RandomFieldValueByType func(string) any            // 根据字段类型生成随机值
 	TrimTablePrefix        string                      // 表名前缀，若有则在转为结构体名前去掉
+
+	Amount int // 数据条数
 }
 
 var (
