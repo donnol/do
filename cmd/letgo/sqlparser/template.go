@@ -338,8 +338,15 @@ func InsertParamFromStruct(s *Struct, opt *Option) *InsertParam {
 				}
 			}
 			var value string
-			if len(choose) != 0 {
-				value = choose[rand.Intn(len(choose))]
+			// 自引用字段，首次取值应为零，同一行不能出现相同值
+			if i == 0 && field.Ref.Table == s.TableName {
+				value = zeroByType(fieldType)
+			} else if len(choose) != 0 {
+				if field.Ref.Table == s.TableName {
+					value = choose[rand.Intn(len(choose)-1)]
+				} else {
+					value = choose[rand.Intn(len(choose))]
+				}
 			} else {
 				value = valueByType(fieldType)
 			}
@@ -366,6 +373,40 @@ func InsertParamFromStruct(s *Struct, opt *Option) *InsertParam {
 		Fields: fields,
 		Values: values,
 	}
+}
+
+func zeroByType(typ string) string {
+	switch typ {
+	case "bool":
+		return "0"
+	case "int":
+		return "0"
+	case "int64":
+		return "0"
+	case "uint":
+		return "0"
+	case "uint64":
+		return "0"
+	case "uint16":
+		return "0"
+	case "int16":
+		return "0"
+	case "uint8":
+		return "0"
+	case "int8":
+		return "0"
+	case "float64":
+		return "0"
+	case "float32":
+		return "0"
+	case "string", "[]byte":
+		return withQuote("")
+	case "json.RawMessage":
+		return withQuote("")
+	case "time.Time":
+		return withQuote("")
+	}
+	return withQuote("")
 }
 
 func valueByType(typ string) string {

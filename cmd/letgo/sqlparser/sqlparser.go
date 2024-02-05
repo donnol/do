@@ -199,7 +199,6 @@ func (v *Struct) Enter(in ast.Node) (ast.Node, bool) {
 						if bi != -1 && ei != -1 && bi < ei {
 							es := field.Comment[bi+len(bs) : ei]
 							parts := strings.Split(es, ".")
-							fmt.Println(parts)
 							if len(parts) == 2 {
 								field.Ref = Ref{
 									Table: parts[0],

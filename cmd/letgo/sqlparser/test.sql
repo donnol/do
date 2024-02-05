@@ -21,3 +21,12 @@ CREATE TABLE IF NOT EXISTS `book` (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `uniq_name` (`name`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC;
+
+CREATE TABLE IF NOT EXISTS `org` (
+  `id` integer unsigned not null AUTO_INCREMENT COMMENT '主键 type(do.Id)',
+  `name` varchar(255) not null comment '名称',
+  `parent_id` integer unsigned not null comment '父级id ref(org.id)',
+  `create_time` datetime NOT NULL default now(),
+  `update_time` datetime NOT NULL default now() on update now(),
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT=1 CHARACTER SET = utf8mb4 ROW_FORMAT = Dynamic COMMENT='部门/组织';
