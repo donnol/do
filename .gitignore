@@ -15,6 +15,7 @@
 # vendor/
 
 testdata/test.db
+cmd/letgo/sqlparser/test.go
 
 go.work
 go.work.sum

@@ -170,7 +170,10 @@ func FromStruct(s *Struct, opt Option) StructForTmpl {
 		{
 			const bs = "type("
 			bi := strings.Index(field.Comment, bs)
-			ei := strings.Index(field.Comment, ")")
+			ei := -1
+			if bi != -1 {
+				ei = strings.Index(field.Comment[bi:], ")") + bi
+			}
 			if bi != -1 && ei != -1 && bi < ei {
 				es := field.Comment[bi+len(bs) : ei]
 				fieldType = es

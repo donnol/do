@@ -172,7 +172,10 @@ func (v *Struct) Enter(in ast.Node) (ast.Node, bool) {
 					// (查找"enum("和")"之间内容，内容可以用中文或英文分号分割)
 					const bs = "enum("
 					bi := strings.Index(field.Comment, bs)
-					ei := strings.Index(field.Comment, ")")
+					ei := -1
+					if bi != -1 {
+						ei = strings.Index(field.Comment[bi:], ")") + bi
+					}
 					if bi != -1 && ei != -1 && bi < ei {
 						es := field.Comment[bi+len(bs) : ei]
 						es = strings.ReplaceAll(es, "；", ";")
@@ -195,7 +198,10 @@ func (v *Struct) Enter(in ast.Node) (ast.Node, bool) {
 					{
 						const bs = "ref("
 						bi := strings.Index(field.Comment, bs)
-						ei := strings.LastIndex(field.Comment, ")")
+						ei := -1
+						if bi != -1 {
+							ei = strings.Index(field.Comment[bi:], ")") + bi
+						}
 						if bi != -1 && ei != -1 && bi < ei {
 							es := field.Comment[bi+len(bs) : ei]
 							parts := strings.Split(es, ".")

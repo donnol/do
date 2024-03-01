@@ -78,10 +78,6 @@ func XMLEscaper(field any) (r any, err error) {
 		}
 		return buf.Bytes(), nil
 	}
-	if err != nil {
-		return
-	}
-
 	return
 }
 
