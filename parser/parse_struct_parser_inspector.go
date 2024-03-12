@@ -468,6 +468,10 @@ func (s Interface) processFunc(mode string, m Method) (fieldName, fieldType, met
 	for i := 0; i < res.Len(); i++ {
 		rvar := res.At(i)
 		name := rvar.Name()
+		// TODO: 当名称为空时，使用r0, r1...
+		// if name == "" {
+		// 	name = fmt.Sprintf("r%d", i)
+		// }
 		if name != "" {
 			useNamedRet = true
 		}
