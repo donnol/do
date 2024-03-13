@@ -29,6 +29,38 @@ func MakeStruct() Struct {
 	}
 }
 
+func ResolveStructSlice(value any) ([]Struct, error) {
+	var refValue reflect.Value
+	if v, ok := value.(reflect.Value); ok {
+		refValue = v
+	} else {
+		refValue = reflect.ValueOf(value)
+	}
+
+	if refValue.Type().Kind() == reflect.Ptr { // 指针
+		refValue = refValue.Elem()
+	}
+	if refValue.Type().Kind() != reflect.Slice {
+		return nil, fmt.Errorf("bad value type , type is %v", refValue.Type().Kind())
+	}
+
+	ss := make([]Struct, 0, refValue.Len())
+	for i := 0; i < refValue.Len(); i++ {
+		field := refValue.Index(i)
+		if field.Type().Kind() != reflect.Struct {
+			continue
+		}
+		s, err := ResolveStruct(field)
+		if err != nil {
+			return nil, err
+		}
+
+		ss = append(ss, s)
+	}
+
+	return ss, nil
+}
+
 func ResolveStruct(value any) (Struct, error) {
 	s := MakeStruct()
 

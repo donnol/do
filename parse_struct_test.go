@@ -3,6 +3,7 @@ package do
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"testing"
 )
@@ -32,12 +33,81 @@ func TestCollectStructComment(t *testing.T) {
 }
 
 func TestResolveStruct(t *testing.T) {
+	buf := new(bytes.Buffer)
 	s, err := ResolveStruct(&Error[error]{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	_ = s
-	// jsonPrint(os.Stdout, s)
+	jsonPrint(buf, s)
+	Assert(t, buf.String(), `{
+	"Name": "github.com/donnol/do.Error",
+	"Comment": "",
+	"Description": "Error is a error type with any element",
+	"Type": {},
+	"Fields": [
+		{
+			"Name": "inner",
+			"PkgPath": "github.com/donnol/do",
+			"Type": {},
+			"Tag": "",
+			"Offset": 0,
+			"Index": [
+				0
+			],
+			"Anonymous": false,
+			"Comment": "inner element",
+			"Struct": {
+				"Name": "",
+				"Comment": "",
+				"Description": "",
+				"Type": null,
+				"Fields": null
+			}
+		}
+	]
+}`)
+}
+
+func TestResolveStructSlice(t *testing.T) {
+	buf := new(bytes.Buffer)
+	s, err := ResolveStructSlice(&[]Error[error]{
+		{
+			inner: errors.New("err"),
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	jsonPrint(buf, s)
+	Assert(t, buf.String(), `[
+	{
+		"Name": "github.com/donnol/do.Error",
+		"Comment": "",
+		"Description": "Error is a error type with any element",
+		"Type": {},
+		"Fields": [
+			{
+				"Name": "inner",
+				"PkgPath": "github.com/donnol/do",
+				"Type": {},
+				"Tag": "",
+				"Offset": 0,
+				"Index": [
+					0
+				],
+				"Anonymous": false,
+				"Comment": "inner element",
+				"Struct": {
+					"Name": "",
+					"Comment": "",
+					"Description": "",
+					"Type": null,
+					"Fields": null
+				}
+			}
+		]
+	}
+]`)
 }
 
 var _ = jsonPrint
