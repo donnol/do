@@ -3,6 +3,7 @@ package do
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -53,7 +54,7 @@ func TestAssert(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			wantBuf: "[/home/jd/Project/jd/do/assert_test.go:61] Bad case, 0 != 1, msg need help",
+			wantBuf: "/do/assert_test.go:61] Bad case, 0 != 1, msg need help",
 		},
 	}
 	for _, tt := range tests {
@@ -61,7 +62,7 @@ func TestAssert(t *testing.T) {
 			Assert(tt.args.logger, tt.args.l, tt.args.r, tt.args.msgAndArgs...)
 			if tt.wantErr && h.buf.Len() == 0 {
 				t.Errorf("bad case, buf is empty")
-			} else if tt.wantErr && h.buf.String() != tt.wantBuf {
+			} else if tt.wantErr && strings.Contains(h.buf.String(), tt.wantBuf) {
 				t.Errorf("bad case, buf is %s", h.buf)
 			}
 		})

@@ -1,12 +1,8 @@
 package parser
 
 import (
-	"fmt"
 	"go/ast"
 	"go/parser"
-	"go/printer"
-	"go/token"
-	"os"
 	"strconv"
 
 	"golang.org/x/tools/go/ast/astutil"
@@ -43,7 +39,7 @@ func ReplaceNameof(pkg string) {
 			)
 			node := astutil.Apply(file, func(c *astutil.Cursor) bool {
 				if reachNameof {
-					ast.Print(token.NewFileSet(), c.Node())
+					// ast.Print(token.NewFileSet(), c.Node())
 
 					var (
 						ne  ast.Expr
@@ -70,9 +66,9 @@ func ReplaceNameof(pkg string) {
 						ne, err = parser.ParseExpr(strconv.Quote(cn.Sel.Name))
 					}
 					if err == nil && ne != nil {
-						fmt.Println("==== replace before ====")
+						// fmt.Println("==== replace before ====")
 						c.Replace(ne)
-						fmt.Println("==== replace after ====")
+						// fmt.Println("==== replace after ====")
 					}
 
 					reachNameof = false
@@ -91,9 +87,9 @@ func ReplaceNameof(pkg string) {
 			}, func(c *astutil.Cursor) bool {
 				return true
 			})
-			if err := printer.Fprint(os.Stdout, token.NewFileSet(), node); err != nil {
-				panic(err)
-			}
+			// if err := printer.Fprint(os.Stdout, token.NewFileSet(), node); err != nil {
+			// 	panic(err)
+			// }
 			nfile := node.(*ast.File)
 			syntax = append(syntax, nfile)
 		}
