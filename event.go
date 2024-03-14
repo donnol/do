@@ -11,6 +11,54 @@ type (
 
 type PipeFunc[I, O any] func(C, I) (O, E)
 
+func PipeToLogic[I, O any](pf PipeFunc[I, O]) Logic[I, O] {
+	return Logic[I, O](pf)
+}
+
+func PipeFromLogic[I, O any](logic Logic[I, O]) PipeFunc[I, O] {
+	return PipeFunc[I, O](logic)
+}
+
+type Piper[I, O any] interface {
+	Run(C, I) (O, E)
+}
+
+func (pf PipeFunc[I, O]) Run(c C, i I) (r O, e E) {
+	return pf(c, i)
+}
+
+var (
+	_ Piper[struct{}, struct{}] = PipeFunc[struct{}, struct{}](nil)
+)
+
+func Pipes[B, D, A, R any](
+	ctx C,
+	b B,
+	before Piper[B, D],
+	do Piper[D, A],
+	after Piper[A, R],
+) (r R, e E) {
+	// 1
+	d, err := before.Run(ctx, b)
+	if err != nil {
+		return
+	}
+
+	// 2
+	a, err := do.Run(ctx, d)
+	if err != nil {
+		return
+	}
+
+	// 3
+	r, err = after.Run(ctx, a)
+	if err != nil {
+		return
+	}
+
+	return r, nil
+}
+
 // Pipe is a pipe run the PipeFuncs in order
 func Pipe[B, D, A, R any](
 	ctx C,

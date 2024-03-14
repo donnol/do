@@ -114,6 +114,22 @@ func TestPipeNested(t *testing.T) {
 	}
 }
 
+func TestPipes(t *testing.T) {
+	p := "begin"
+	// 好笨啊，1.20这都推不出类型
+	before := PipeFunc[string, string](func(ctx C, p string) (string, error) {
+		return p + " before", nil
+	})
+	do := PipeFunc[string, string](func(ctx C, p string) (string, error) {
+		return p + " do", nil
+	})
+	after := PipeFunc[string, string](func(ctx C, p string) (string, error) {
+		return p + " after", nil
+	})
+	r := Must1(Pipes[string, string, string, string](context.Background(), p, before, do, after))
+	Assert(t, r, "begin before do after")
+}
+
 func TestRunEvent(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		buf := new(bytes.Buffer)
