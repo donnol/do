@@ -19,6 +19,10 @@ func PipeFromLogic[I, O any](logic Logic[I, O]) PipeFunc[I, O] {
 	return PipeFunc[I, O](logic)
 }
 
+func PipeFrom[I, O any](f func(C, I) (O, E)) PipeFunc[I, O] {
+	return PipeFunc[I, O](f)
+}
+
 type Piper[I, O any] interface {
 	Run(C, I) (O, E)
 }

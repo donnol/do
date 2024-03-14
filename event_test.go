@@ -116,16 +116,16 @@ func TestPipeNested(t *testing.T) {
 
 func TestPipes(t *testing.T) {
 	p := "begin"
-	// 好笨啊，1.20这都推不出类型
-	before := PipeFunc[string, string](func(ctx C, p string) (string, error) {
+	before := PipeFrom(func(ctx C, p string) (string, error) {
 		return p + " before", nil
 	})
-	do := PipeFunc[string, string](func(ctx C, p string) (string, error) {
+	do := PipeFrom(func(ctx C, p string) (string, error) {
 		return p + " do", nil
 	})
-	after := PipeFunc[string, string](func(ctx C, p string) (string, error) {
+	after := PipeFrom(func(ctx C, p string) (string, error) {
 		return p + " after", nil
 	})
+	// 好笨啊，1.20这都推不出类型；需要用1.22才行：https://go.dev/play/p/C7tpqRGVXDJ
 	r := Must1(Pipes[string, string, string, string](context.Background(), p, before, do, after))
 	Assert(t, r, "begin before do after")
 }
