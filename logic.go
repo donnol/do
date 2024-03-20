@@ -114,3 +114,15 @@ var (
 	_ ToLogic[int, struct{}]      = LogicWithoutResultError[int](nil)
 	_ ToLogic[struct{}, struct{}] = LogicWithoutParamResultError(nil)
 )
+
+type LogicSet[P, R any] interface {
+	func(C, P) (R, E) |
+		Logic[P, R] |
+		LogicWithoutParam[R] |
+		LogicWithoutResult[P] |
+		LogicWithoutPR |
+		LogicWithoutError[P, R] |
+		LogicWithoutParamError[R] |
+		LogicWithoutResultError[P] |
+		LogicWithoutParamResultError
+}
