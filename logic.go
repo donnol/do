@@ -48,6 +48,10 @@ func LogicWPRE(f func(C)) LogicWithoutParamResultError {
 	return f
 }
 
+func (l Logic[P, R]) ToLogic() Logic[P, R] {
+	return l
+}
+
 func (l LogicWithoutParam[R]) ToLogic() Logic[struct{}, R] {
 	return func(ctx C, p struct{}) (r R, err E) {
 		return l(ctx)
@@ -95,3 +99,18 @@ func (l LogicWithoutParamResultError) ToLogic() Logic[struct{}, struct{}] {
 		return
 	}
 }
+
+type ToLogic[P, R any] interface {
+	ToLogic() Logic[P, R]
+}
+
+var (
+	_ ToLogic[int, string]        = Logic[int, string](nil)
+	_ ToLogic[struct{}, string]   = LogicWithoutParam[string](nil)
+	_ ToLogic[int, struct{}]      = LogicWithoutResult[int](nil)
+	_ ToLogic[struct{}, struct{}] = LogicWithoutPR(nil)
+	_ ToLogic[int, string]        = LogicWithoutError[int, string](nil)
+	_ ToLogic[struct{}, string]   = LogicWithoutParamError[string](nil)
+	_ ToLogic[int, struct{}]      = LogicWithoutResultError[int](nil)
+	_ ToLogic[struct{}, struct{}] = LogicWithoutParamResultError(nil)
+)
