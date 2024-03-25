@@ -35,6 +35,14 @@ type (
 	}
 )
 
+func (p Pager) Limit() int {
+	return p.PageSize
+}
+
+func (p Pager) Offset() int {
+	return (p.Page - 1) * p.PageSize
+}
+
 type (
 	IdType[T any] struct {
 		Id T `json:"id" form:"id"` // id
