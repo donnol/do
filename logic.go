@@ -28,7 +28,7 @@ func LogicWR[P any](f func(C, P) E) LogicWithoutResult[P] {
 	return f
 }
 
-func LogicWPR[P any](f func(C) E) LogicWithoutPR {
+func LogicWPR(f func(C) E) LogicWithoutPR {
 	return f
 }
 
