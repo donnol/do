@@ -17,3 +17,11 @@ func RunIf[P, R any, F LogicSet[P, R]](cond bool, ctx C, param P, f F) (r R, err
 
 	return l(ctx, param)
 }
+
+func RunLogicIf[P, R any](cond bool, ctx C, param P, f Logic[P, R]) (r R, err E) {
+	if !cond {
+		return
+	}
+
+	return f(ctx, param)
+}

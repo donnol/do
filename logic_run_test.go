@@ -39,3 +39,38 @@ func TestRunIf(t *testing.T) {
 		Assert(t, r, struct{}{})
 	}
 }
+
+func TestRunLogicIf(t *testing.T) {
+	{
+		r := Must1(RunLogicIf(1 != 0, context.Background(), 1, LogicFrom(logic)))
+		Assert(t, r, "")
+	}
+	{
+		r := Must1(RunLogicIf(1 != 0, context.Background(), struct{}{}, LogicFromWP(logicWP)))
+		Assert(t, r, "")
+	}
+	{
+		r := Must1(RunLogicIf(1 != 0, context.Background(), 1, LogicFromWR(logicWR)))
+		Assert(t, r, struct{}{})
+	}
+	{
+		r := Must1(RunLogicIf(1 != 0, context.Background(), struct{}{}, LogicFromWPR(logicWPR)))
+		Assert(t, r, struct{}{})
+	}
+	{
+		r := Must1(RunLogicIf(1 != 0, context.Background(), 1, LogicFromWE(logicWE)))
+		Assert(t, r, "")
+	}
+	{
+		r := Must1(RunLogicIf(1 != 0, context.Background(), struct{}{}, LogicFromWPE(logicWPE)))
+		Assert(t, r, "")
+	}
+	{
+		r := Must1(RunLogicIf(1 != 0, context.Background(), 1, LogicFromWRE(logicWRE)))
+		Assert(t, r, struct{}{})
+	}
+	{
+		r := Must1(RunLogicIf(1 != 0, context.Background(), struct{}{}, LogicFromWPRE(logicWPRE)))
+		Assert(t, r, struct{}{})
+	}
+}

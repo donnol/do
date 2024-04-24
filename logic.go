@@ -20,6 +20,34 @@ func LogicFrom[P, R any](f func(C, P) (R, E)) Logic[P, R] {
 	return f
 }
 
+func LogicFromWP[R any](f func(C) (R, E)) Logic[struct{}, R] {
+	return LogicWP(f).ToLogic()
+}
+
+func LogicFromWR[P any](f func(C, P) E) Logic[P, struct{}] {
+	return LogicWR(f).ToLogic()
+}
+
+func LogicFromWPR(f func(C) E) Logic[struct{}, struct{}] {
+	return LogicWPR(f).ToLogic()
+}
+
+func LogicFromWE[P, R any](f func(C, P) R) Logic[P, R] {
+	return LogicWE(f).ToLogic()
+}
+
+func LogicFromWPE[R any](f func(C) R) Logic[struct{}, R] {
+	return LogicWPE(f).ToLogic()
+}
+
+func LogicFromWRE[P any](f func(C, P)) Logic[P, struct{}] {
+	return LogicWRE(f).ToLogic()
+}
+
+func LogicFromWPRE(f func(C)) Logic[struct{}, struct{}] {
+	return LogicWPRE(f).ToLogic()
+}
+
 func LogicWP[R any](f func(C) (R, E)) LogicWithoutParam[R] {
 	return f
 }
