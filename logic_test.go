@@ -35,8 +35,8 @@ func logicWR(ctx context.Context, p int) (err error)         { return }
 func logicWPR(ctx context.Context) (err error)               { return }
 func logicWE(ctx context.Context, p int) (r string)          { return }
 func logicWPE(ctx context.Context) (r string)                { return }
-func logicWRE(ctx context.Context, p int)                    { return }
-func logicWPRE(ctx context.Context)                          { return }
+func logicWRE(ctx context.Context, p int)                    {}
+func logicWPRE(ctx context.Context)                          {}
 
 func logicHelper[P, R any](logic ToLogic[P, R]) Logic[P, R] {
 	return logic.ToLogic()
