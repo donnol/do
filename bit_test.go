@@ -76,3 +76,62 @@ func TestIsPowerOf2(t *testing.T) {
 		})
 	}
 }
+
+// From: https://github.com/labuladong/fucking-algorithm/blob/master/%E7%AE%97%E6%B3%95%E6%80%9D%E7%BB%B4%E7%B3%BB%E5%88%97/%E5%B8%B8%E7%94%A8%E7%9A%84%E4%BD%8D%E6%93%8D%E4%BD%9C.md
+
+func TestToLowerByBit(t *testing.T) {
+	Assert(t, ('a' | ' '), 'a')
+	Assert(t, ('A' | ' '), 'a')
+	Assert(t, ('b' & '_'), 'B')
+	Assert(t, ('B' & '_'), 'B')
+	Assert(t, ('d' ^ ' '), 'D')
+	Assert(t, ('D' ^ ' '), 'd')
+}
+
+func TestSwapByBit(t *testing.T) {
+	var a, b = 1, 2
+	a, b = SwapByBit(a, b)
+
+	// 现在 a = 2, b = 1
+	Assert(t, a, 2)
+	Assert(t, b, 1)
+}
+
+func TestAddOneByBit(t *testing.T) {
+	var n = 1
+	n = -^n
+
+	// 现在 n = 2
+	Assert(t, n, 2)
+}
+
+func TestSubOneByBit(t *testing.T) {
+	var n = 2
+	n = ^-n
+
+	// 现在 n = 1
+	Assert(t, n, 1)
+}
+
+func TestIsSignDiff(t *testing.T) {
+	{
+		var x, y = -1, 2
+		f := IsSignDiff(x, y)
+		Assert(t, f, true)
+	}
+
+	{
+		var x, y = 3, 2
+		f := IsSignDiff(x, y)
+		Assert(t, f, false)
+	}
+}
+
+func TestSelf(t *testing.T) {
+	// 任何数，异或自身必得0
+	for i := -1; i < 10000; i++ {
+		//lint:ignore SA4000 this is ok
+		r := i ^ i
+		Assert(t, r, 0)
+	}
+}
