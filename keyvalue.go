@@ -62,10 +62,30 @@ func MapFrom[T any, R interface{ From(T) }](s []T, initial func() R) []R {
 	return r
 }
 
+func MapFrom2[T any, R interface{ From(T) R }](s []T) []R {
+	var f R
+
+	r := make([]R, len(s))
+	for i, item := range s {
+		// 有了返回值，因此不需要使用指针
+		v := f.From(item)
+		r[i] = v
+	}
+	return r
+}
+
 func MapTo[T interface{ To() R }, R any](s []T) []R {
 	r := make([]R, len(s))
 	for i, item := range s {
 		r[i] = item.To()
+	}
+	return r
+}
+
+func MapTo2[T interface{ To(T) R }, R any](s []T) []R {
+	r := make([]R, len(s))
+	for i, item := range s {
+		r[i] = item.To(item)
 	}
 	return r
 }

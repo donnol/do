@@ -157,6 +157,16 @@ func (u fromUser2) To() *toUser {
 	}
 }
 
+type fromUser3 struct {
+	Name string
+}
+
+func (u fromUser3) To(v fromUser3) toUser {
+	return toUser{
+		Name: v.Name + "1",
+	}
+}
+
 type toUser struct {
 	Name string
 }
@@ -169,9 +179,23 @@ func (u *toUser) From(v fromUser) {
 	u.Name = v.Name + "1"
 }
 
+type toUser2 struct {
+	Name string
+}
+
+func (u toUser2) From(v fromUser) toUser2 {
+	u.Name = v.Name + "1"
+	return u
+}
+
 func TestMapFrom(t *testing.T) {
 	got := MapFrom([]fromUser{{Name: "jd"}, {Name: "jc"}}, NewToUser)
 	AssertSlicePtr(t, got, []*toUser{{"jd1"}, {"jc1"}})
+}
+
+func TestMapFrom2(t *testing.T) {
+	got := MapFrom2[fromUser, toUser2]([]fromUser{{Name: "jd"}, {Name: "jc"}})
+	AssertSlice(t, got, []toUser2{{"jd1"}, {"jc1"}})
 }
 
 func TestMapTo(t *testing.T) {
@@ -183,9 +207,20 @@ func TestMapTo(t *testing.T) {
 	}
 }
 
+func TestMapTo2(t *testing.T) {
+	got := MapTo2[fromUser3, toUser]([]fromUser3{{Name: "jd"}, {Name: "jc"}})
+	AssertSlice(t, got, []toUser{{"jd1"}, {"jc1"}})
+}
+
 func BenchmarkMapFrom(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		MapFrom([]fromUser{{Name: "jd"}, {Name: "jc"}}, NewToUser)
+	}
+}
+
+func BenchmarkMapFrom2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		MapFrom2[fromUser, toUser2]([]fromUser{{Name: "jd"}, {Name: "jc"}})
 	}
 }
 
@@ -198,5 +233,11 @@ func BenchmarkMapTo(b *testing.B) {
 func BenchmarkMapTo2(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		MapTo[fromUser2, *toUser]([]fromUser2{{Name: "jd"}, {Name: "jc"}})
+	}
+}
+
+func BenchmarkMapTo3(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		MapTo2[fromUser3, toUser]([]fromUser3{{Name: "jd"}, {Name: "jc"}})
 	}
 }
