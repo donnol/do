@@ -136,3 +136,67 @@ func TestMergeKeyValue(t *testing.T) {
 		})
 	}
 }
+
+type fromUser struct {
+	Name string
+}
+
+func (u fromUser) To() toUser {
+	return toUser{
+		Name: u.Name + "1",
+	}
+}
+
+type fromUser2 struct {
+	Name string
+}
+
+func (u fromUser2) To() *toUser {
+	return &toUser{
+		Name: u.Name + "1",
+	}
+}
+
+type toUser struct {
+	Name string
+}
+
+func NewToUser() *toUser {
+	return &toUser{}
+}
+
+func (u *toUser) From(v fromUser) {
+	u.Name = v.Name + "1"
+}
+
+func TestMapFrom(t *testing.T) {
+	got := MapFrom([]fromUser{{Name: "jd"}, {Name: "jc"}}, NewToUser)
+	AssertSlicePtr(t, got, []*toUser{{"jd1"}, {"jc1"}})
+}
+
+func TestMapTo(t *testing.T) {
+	got := MapTo[fromUser, toUser]([]fromUser{{Name: "jd"}, {Name: "jc"}})
+	AssertSlice(t, got, []toUser{{"jd1"}, {"jc1"}})
+	{
+		got := MapTo[fromUser2, *toUser]([]fromUser2{{Name: "jd"}, {Name: "jc"}})
+		AssertSlicePtr(t, got, []*toUser{{"jd1"}, {"jc1"}})
+	}
+}
+
+func BenchmarkMapFrom(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		MapFrom([]fromUser{{Name: "jd"}, {Name: "jc"}}, NewToUser)
+	}
+}
+
+func BenchmarkMapTo(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		MapTo[fromUser, toUser]([]fromUser{{Name: "jd"}, {Name: "jc"}})
+	}
+}
+
+func BenchmarkMapTo2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		MapTo[fromUser2, *toUser]([]fromUser2{{Name: "jd"}, {Name: "jc"}})
+	}
+}

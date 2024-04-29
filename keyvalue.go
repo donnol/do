@@ -50,3 +50,22 @@ func MergeKeyValue[K comparable, V any](m1, m2 map[K]V) map[K]V {
 	}
 	return m1
 }
+
+func MapFrom[T any, R interface{ From(T) }](s []T, initial func() R) []R {
+	r := make([]R, len(s))
+	for i, item := range s {
+		// v必须是一个指针，如果直接传入R值会导致值一直一样；因此改为传入initial函数，用它来生成生成R对象值
+		v := initial()
+		v.From(item)
+		r[i] = v
+	}
+	return r
+}
+
+func MapTo[T interface{ To() R }, R any](s []T) []R {
+	r := make([]R, len(s))
+	for i, item := range s {
+		r[i] = item.To()
+	}
+	return r
+}
