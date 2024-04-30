@@ -13,6 +13,14 @@ var (
 	Location = time.FixedZone("CST", 8*3600) // 东八，Asia/Shanghai
 )
 
+func Date(year int, month time.Month, day int, loc *time.Location) time.Time {
+	return time.Date(year, month, day, 0, 0, 0, 0, loc)
+}
+
+func DateLocal(year int, month time.Month, day int) time.Time {
+	return Date(year, month, day, time.Local)
+}
+
 // IsExpired show if deadline is expired compared to now
 // always return false if deadline is zero
 func IsExpired(deadline, now time.Time) bool {

@@ -6,6 +6,20 @@ import (
 	"time"
 )
 
+func TestDate(t *testing.T) {
+	tt := Date(2022, 03, 22, time.Local)
+	Assert(t, tt.Year(), 2022)
+	Assert(t, tt.Month(), 3)
+	Assert(t, tt.Day(), 22)
+}
+
+func TestDateLocal(t *testing.T) {
+	tt := DateLocal(2022, 03, 22)
+	Assert(t, tt.Year(), 2022)
+	Assert(t, tt.Month(), 3)
+	Assert(t, tt.Day(), 22)
+}
+
 func TestIsExpired(t *testing.T) {
 	type args struct {
 		deadline time.Time
