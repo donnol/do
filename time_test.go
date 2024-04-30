@@ -210,6 +210,138 @@ func TestAgeByBirth(t *testing.T) {
 			wantUnit: "岁",
 		},
 		{
+			name: "20y-01",
+			args: args{
+				birthday: time.Date(2002, 01, 22, 0, 0, 0, 0, time.Local),
+				now: []time.Time{
+					time.Date(2024, 01, 21, 0, 0, 0, 0, time.Local),
+				},
+			},
+			wantAge:  21,
+			wantUnit: "岁",
+		},
+		{
+			name: "20y-02",
+			args: args{
+				birthday: time.Date(2002, 02, 22, 0, 0, 0, 0, time.Local),
+				now: []time.Time{
+					time.Date(2024, 02, 21, 0, 0, 0, 0, time.Local),
+				},
+			},
+			wantAge:  21,
+			wantUnit: "岁",
+		},
+		{
+			name: "20y-03",
+			args: args{
+				birthday: time.Date(2002, 03, 22, 0, 0, 0, 0, time.Local),
+				now: []time.Time{
+					time.Date(2024, 03, 21, 0, 0, 0, 0, time.Local),
+				},
+			},
+			wantAge:  21,
+			wantUnit: "岁",
+		},
+		{
+			name: "20y-04",
+			args: args{
+				birthday: time.Date(2002, 04, 22, 0, 0, 0, 0, time.Local),
+				now: []time.Time{
+					time.Date(2024, 04, 21, 0, 0, 0, 0, time.Local),
+				},
+			},
+			wantAge:  21,
+			wantUnit: "岁",
+		},
+		{
+			name: "20y-05",
+			args: args{
+				birthday: time.Date(2002, 05, 22, 0, 0, 0, 0, time.Local),
+				now: []time.Time{
+					time.Date(2024, 05, 21, 0, 0, 0, 0, time.Local),
+				},
+			},
+			wantAge:  21,
+			wantUnit: "岁",
+		},
+		{
+			name: "20y-06",
+			args: args{
+				birthday: time.Date(2002, 06, 22, 0, 0, 0, 0, time.Local),
+				now: []time.Time{
+					time.Date(2024, 06, 21, 0, 0, 0, 0, time.Local),
+				},
+			},
+			wantAge:  21,
+			wantUnit: "岁",
+		},
+		{
+			name: "20y-07",
+			args: args{
+				birthday: time.Date(2002, 07, 22, 0, 0, 0, 0, time.Local),
+				now: []time.Time{
+					time.Date(2024, 07, 21, 0, 0, 0, 0, time.Local),
+				},
+			},
+			wantAge:  21,
+			wantUnit: "岁",
+		},
+		{
+			name: "20y-08",
+			args: args{
+				birthday: time.Date(2002, 8, 22, 0, 0, 0, 0, time.Local),
+				now: []time.Time{
+					time.Date(2024, 8, 21, 0, 0, 0, 0, time.Local),
+				},
+			},
+			wantAge:  21,
+			wantUnit: "岁",
+		},
+		{
+			name: "20y-09",
+			args: args{
+				birthday: time.Date(2002, 9, 22, 0, 0, 0, 0, time.Local),
+				now: []time.Time{
+					time.Date(2024, 9, 21, 0, 0, 0, 0, time.Local),
+				},
+			},
+			wantAge:  21,
+			wantUnit: "岁",
+		},
+		{
+			name: "20y-10",
+			args: args{
+				birthday: time.Date(2002, 10, 22, 0, 0, 0, 0, time.Local),
+				now: []time.Time{
+					time.Date(2024, 10, 21, 0, 0, 0, 0, time.Local),
+				},
+			},
+			wantAge:  21,
+			wantUnit: "岁",
+		},
+		{
+			name: "20y-11",
+			args: args{
+				birthday: time.Date(2002, 11, 22, 0, 0, 0, 0, time.Local),
+				now: []time.Time{
+					time.Date(2024, 11, 21, 0, 0, 0, 0, time.Local),
+				},
+			},
+			wantAge:  21,
+			wantUnit: "岁",
+		},
+		{
+			name: "20y-12",
+			args: args{
+				birthday: time.Date(2002, 12, 22, 0, 0, 0, 0, time.Local),
+				now: []time.Time{
+					time.Date(2024, 12, 21, 0, 0, 0, 0, time.Local),
+				},
+			},
+			wantAge:  21,
+			wantUnit: "岁",
+		},
+		{
 			name: "1y",
 			args: args{
 				birthday: time.Date(2023, 01, 22, 0, 0, 0, 0, time.Local),
@@ -301,17 +433,16 @@ func TestAgeByBirth(t *testing.T) {
 			wantAge:  17,
 			wantUnit: "岁",
 		},
-		// 现在的计算方式算出来是18（1 January 1; 19 January 1）
-		// {
-		// 	name: "before-1d",
-		// 	args: args{
-		// 		// 2006年8月4日
-		// 		birthday: time.Date(2006, 8, 4, 0, 0, 0, 0, time.Local),
-		// 		now:      []time.Time{time.Date(2024, 8, 3, 0, 0, 0, 0, time.Local)},
-		// 	},
-		// 	wantAge:  17,
-		// 	wantUnit: "岁",
-		// },
+		{
+			name: "before-1d",
+			args: args{
+				// 2006年8月4日
+				birthday: time.Date(2006, 8, 4, 0, 0, 0, 0, time.Local),
+				now:      []time.Time{time.Date(2024, 8, 3, 0, 0, 0, 0, time.Local)},
+			},
+			wantAge:  17,
+			wantUnit: "岁",
+		},
 		{
 			name: "equal-date",
 			args: args{

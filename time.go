@@ -86,6 +86,9 @@ func AgeByBirth(birthday time.Time, now ...time.Time) (age int, unit string) {
 		unit = "天"
 	}
 
+	_, bdm, bdd := birthday.Date()
+	_, im, id := nt.Date()
+
 	zero := time.Time{}
 	ny, nm, nd := zero.Date() // 1 1 1
 
@@ -95,6 +98,12 @@ func AgeByBirth(birthday time.Time, now ...time.Time) (age int, unit string) {
 	if ry > 0 {
 		age = ry
 		unit = "岁"
+
+		// 如果月份和日子为0时，两个日期的月份和日子中的一个不相等，则说明未足年
+		if (rm == 0 && rd == 0) && (im != bdm || id != bdd) {
+			age--
+		}
+
 	} else if rm > 0 {
 		age = int(rm)
 		unit = "月"
