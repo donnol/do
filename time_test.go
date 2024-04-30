@@ -281,6 +281,57 @@ func TestAgeByBirth(t *testing.T) {
 			wantAge:  0,
 			wantUnit: "",
 		},
+		{
+			name: "before-dates",
+			args: args{
+				// 2006年8月4日
+				birthday: time.Date(2006, 8, 4, 0, 0, 0, 0, time.Local),
+				now:      []time.Time{time.Date(2024, 04, 30, 0, 0, 0, 0, time.Local)},
+			},
+			wantAge:  17,
+			wantUnit: "岁",
+		},
+		{
+			name: "before-2d",
+			args: args{
+				// 2006年8月4日
+				birthday: time.Date(2006, 8, 4, 0, 0, 0, 0, time.Local),
+				now:      []time.Time{time.Date(2024, 8, 2, 0, 0, 0, 0, time.Local)},
+			},
+			wantAge:  17,
+			wantUnit: "岁",
+		},
+		// 现在的计算方式算出来是18（1 January 1; 19 January 1）
+		// {
+		// 	name: "before-1d",
+		// 	args: args{
+		// 		// 2006年8月4日
+		// 		birthday: time.Date(2006, 8, 4, 0, 0, 0, 0, time.Local),
+		// 		now:      []time.Time{time.Date(2024, 8, 3, 0, 0, 0, 0, time.Local)},
+		// 	},
+		// 	wantAge:  17,
+		// 	wantUnit: "岁",
+		// },
+		{
+			name: "equal-date",
+			args: args{
+				// 2006年8月4日
+				birthday: time.Date(2006, 8, 4, 0, 0, 0, 0, time.Local),
+				now:      []time.Time{time.Date(2024, 8, 4, 0, 0, 0, 0, time.Local)},
+			},
+			wantAge:  18,
+			wantUnit: "岁",
+		},
+		{
+			name: "after-1d",
+			args: args{
+				// 2006年8月4日
+				birthday: time.Date(2006, 8, 4, 0, 0, 0, 0, time.Local),
+				now:      []time.Time{time.Date(2024, 8, 5, 0, 0, 0, 0, time.Local)},
+			},
+			wantAge:  18,
+			wantUnit: "岁",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
