@@ -8,7 +8,10 @@ import (
 	"time"
 )
 
-const prefix = "http://localhost"
+const (
+	prefix      = "http://localhost"
+	httpsPrefix = "https://localhost"
+)
 
 func TestHTTPProxy(t *testing.T) {
 	type args struct {
@@ -69,4 +72,72 @@ func startServer(addr string, ret []byte) {
 		Handler: mux,
 	}
 	Must(s.ListenAndServe())
+}
+
+func TestHTTPSProxy(t *testing.T) {
+	type args struct {
+		localAddr  string
+		remoteAddr string
+		msg        []byte
+		cert, key  string
+		opt        *HTTPProxyOption
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+		{
+			name: "",
+			args: args{
+				localAddr:  ":55688",
+				remoteAddr: ":55799",
+				msg:        []byte("hello" + strconv.Itoa(rand.Int())),
+				cert:       "./testdata/cert/server.crt",
+				key:        "./testdata/cert/server.key",
+				opt:        &HTTPProxyOption{},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			go startHTTPSServer(tt.args.remoteAddr, tt.args.msg, tt.args.cert, tt.args.key)
+
+			go func() {
+				// TODO:
+				// tt.args.opt.Cert = tt.args.cert
+				// tt.args.opt.Key = tt.args.key
+				if err := HTTPProxy(tt.args.localAddr, httpsPrefix+tt.args.remoteAddr, tt.args.opt); (err != nil) != tt.wantErr {
+					t.Errorf("HTTPProxy() error = %v, wantErr %v", err, tt.wantErr)
+				}
+			}()
+			time.Sleep(time.Millisecond * 200)
+
+			{
+				client := NewHTTPClient(HTTPClientSkipVerify())
+				r, err := SendHTTPRequest(client, http.MethodGet, httpsPrefix+tt.args.localAddr, nil, nil, CodeIs200, RawExtractor)
+				if err != nil {
+					t.Error(err)
+				}
+				if string(r) != string(tt.args.msg) {
+					t.Errorf("bad case, %s != %s", r, tt.args.msg)
+				}
+			}
+		})
+	}
+}
+
+func startHTTPSServer(addr string, ret []byte, cert, key string) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write(ret)
+	})
+
+	s := &http.Server{
+		Addr:    addr,
+		Handler: mux,
+	}
+	Must(s.ListenAndServeTLS(cert, key))
 }
