@@ -72,16 +72,10 @@ func HTTPProxy(localAddr, remoteAddr string, opt *HTTPProxyOption) (err error) {
 // signed by the parent/parentKey certificate. hoursValid is the duration of
 // the new certificate's validity.
 func createCert(dnsNames []string, parent *x509.Certificate, parentKey crypto.PrivateKey, hoursValid int) (cert []byte, priv []byte) {
-	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		log.Fatalf("Failed to generate private key: %v", err)
-	}
+	privateKey := Must1(ecdsa.GenerateKey(elliptic.P256(), rand.Reader))
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
-	if err != nil {
-		log.Fatalf("Failed to generate serial number: %v", err)
-	}
+	serialNumber := Must1(rand.Int(rand.Reader, serialNumberLimit))
 
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
@@ -97,19 +91,13 @@ func createCert(dnsNames []string, parent *x509.Certificate, parentKey crypto.Pr
 		BasicConstraintsValid: true,
 	}
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, parent, &privateKey.PublicKey, parentKey)
-	if err != nil {
-		log.Fatalf("Failed to create certificate: %v", err)
-	}
+	derBytes := Must1(x509.CreateCertificate(rand.Reader, &template, parent, &privateKey.PublicKey, parentKey))
 	pemCert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	if pemCert == nil {
 		panic(fmt.Errorf("failed to encode certificate to PEM"))
 	}
 
-	privBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
-	if err != nil {
-		log.Fatalf("Unable to marshal private key: %v", err)
-	}
+	privBytes := Must1(x509.MarshalPKCS8PrivateKey(privateKey))
 	pemKey := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privBytes})
 	if pemKey == nil {
 		panic(fmt.Errorf("failed to encode key to PEM"))
@@ -158,10 +146,7 @@ type mitmProxy struct {
 // for the certificate and private key of a certificate authority trusted by the
 // client's machine.
 func createMitmProxy(caCertFile, caKeyFile string) *mitmProxy {
-	caCert, caKey, err := loadX509KeyPair(caCertFile, caKeyFile)
-	if err != nil {
-		panic(fmt.Errorf("Error loading CA certificate/key: %v", err))
-	}
+	caCert, caKey := Must2(loadX509KeyPair(caCertFile, caKeyFile))
 	log.Printf("loaded CA certificate and key; IsCA=%v\n", caCert.IsCA)
 
 	return &mitmProxy{
@@ -189,34 +174,23 @@ func (p *mitmProxy) proxyConnect(w http.ResponseWriter, proxyReq *http.Request) 
 		panic(fmt.Errorf("http server doesn't support hijacking connection"))
 	}
 
-	clientConn, _, err := hj.Hijack()
-	if err != nil {
-		panic(fmt.Errorf("http hijacking failed"))
-	}
+	clientConn, _ := Must2(hj.Hijack())
 
 	// proxyReq.Host will hold the CONNECT target host, which will typically have
 	// a port - e.g. example.org:443
 	// To generate a fake certificate for example.org, we have to first split off
 	// the host from the port.
-	host, _, err := net.SplitHostPort(proxyReq.Host)
-	if err != nil {
-		panic(fmt.Errorf("error splitting host/port: %v", err))
-	}
+	host, _ := Must2(net.SplitHostPort(proxyReq.Host))
 
 	// Create a fake TLS certificate for the target host, signed by our CA. The
 	// certificate will be valid for 10 days - this number can be changed.
 	pemCert, pemKey := createCert([]string{host}, p.caCert, p.caKey, 240)
-	tlsCert, err := tls.X509KeyPair(pemCert, pemKey)
-	if err != nil {
-		panic(err)
-	}
+	tlsCert := Must1(tls.X509KeyPair(pemCert, pemKey))
 
 	// Send an HTTP OK response back to the client; this initiates the CONNECT
 	// tunnel. From this point on the client will assume it's connected directly
 	// to the target.
-	if _, err := clientConn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n")); err != nil {
-		panic(fmt.Errorf("error writing status to client: %v", err))
-	}
+	Must1(clientConn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n")))
 	log.Printf("connect ok")
 
 	// Configure a new TLS server, pointing it at the client connection, using
@@ -264,10 +238,7 @@ func (p *mitmProxy) proxyConnect(w http.ResponseWriter, proxyReq *http.Request) 
 
 		log.Printf("will reqeust %s", r.URL)
 		// Send the request to the target server and log the response.
-		resp, err := http.DefaultClient.Do(r)
-		if err != nil {
-			panic(fmt.Errorf("error sending request to target: %v", err))
-		}
+		resp := Must1(http.DefaultClient.Do(r))
 		if b, err := httputil.DumpResponse(resp, false); err == nil {
 			log.Printf("target response:\n%s\n", string(b))
 		}
@@ -296,10 +267,7 @@ func addrToUrl(addr string) *url.URL {
 	if !strings.HasPrefix(addr, "https") {
 		addr = "https://" + addr
 	}
-	u, err := url.Parse(addr)
-	if err != nil {
-		panic(err)
-	}
+	u := Must1(url.Parse(addr))
 	return u
 }
 
