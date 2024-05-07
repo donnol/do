@@ -15,8 +15,7 @@
 # vendor/
 
 testdata/test.db
-testdata/cert/*
-testdata/cert2/*
+testdata/cert*
 cmd/letgo/sqlparser/test.go
 
 go.work
