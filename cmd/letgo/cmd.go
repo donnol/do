@@ -104,6 +104,39 @@ var (
 			},
 		},
 		{
+			Name:  "httpsproxy",
+			Usage: `letgo httpsproxy --addr=':56899' --cacert='' --cakey='' --cert='' --key=''`,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name: "addr",
+				},
+				&cli.StringFlag{
+					Name: "cacert",
+				},
+				&cli.StringFlag{
+					Name: "cakey",
+				},
+				&cli.StringFlag{
+					Name: "cert",
+				},
+				&cli.StringFlag{
+					Name: "key",
+				},
+			},
+			Action: func(c *cli.Context) (err error) {
+				addr := c.String("addr")
+				if err = do.HTTPSProxy(addr, &do.HTTPSProxyOption{
+					CertFile:   c.String("cert"),
+					KeyFile:    c.String("key"),
+					CaCertFile: c.String("cacert"),
+					CaKeyFile:  c.String("cakey"),
+				}); err != nil {
+					return
+				}
+				return
+			},
+		},
+		{
 			Name:  "sql2struct",
 			Usage: `letgo sql2struct 'create table user(id int not null)'`,
 			Flags: []cli.Flag{

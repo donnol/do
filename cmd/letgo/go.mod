@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
-	github.com/donnol/do v1.0.0
+	github.com/donnol/do v1.14.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/samber/lo v1.38.1
 	github.com/urfave/cli/v2 v2.25.3

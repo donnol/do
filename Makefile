@@ -9,6 +9,12 @@ test_letgo_sql2struct:install_letgo
 test_letgo_sql2struct_insert:install_letgo
 	letgo sql2struct --pkg=sqlparser -f ./cmd/letgo/sqlparser/test.sql insert --amount=3
 
+# 将`./testdata/cert2`和`./testdata/cert3`里的`crt`文件内容追加到`/etc/ssl/certs/ca-certificates.crt`
+# 
+# curl -k --proxy-insecure https://www.baidu.com
+test_letgo_httpsproxy:install_letgo
+	letgo httpsproxy  --addr=':56899' --cacert='./testdata/cert3/server.crt' --cakey='./testdata/cert3/server.key' --cert='./testdata/cert2/server.crt' --key='./testdata/cert2/server.key'
+
 # 生成证书(参照：https://cloud.tencent.com/developer/article/1548350)
 # .key: 私钥
 # .csr: 证书请求文件，这个文件中会包含申请人的一些信息
@@ -19,9 +25,9 @@ test_letgo_sql2struct_insert:install_letgo
 certdir=testdata/cert/
 certgen:
 	cd $(certdir) && \
-	openssl genrsa -out server.key 1024 && \
+	openssl genrsa -out server.key 2048 && \
 	openssl req -new -key server.key -out server.csr && \
-	openssl genrsa -out ca.key 1024 && \
+	openssl genrsa -out ca.key 2048 && \
 	openssl req -new -key ca.key -out ca.csr && \
 	openssl x509 -req -in ca.csr -signkey ca.key -out ca.crt && \
 	openssl x509 -req -CA ca.crt -CAkey ca.key -CAcreateserial -in server.csr -out server.crt && \
