@@ -260,3 +260,157 @@ func TestIndex(t *testing.T) {
 		})
 	}
 }
+
+func TestFirstOr(t *testing.T) {
+	type args struct {
+		s []int
+	}
+	tests := []struct {
+		name  string
+		args  args
+		wantT int
+	}{
+		// TODO: Add test cases.
+		{
+			name: "0",
+			args: args{
+				s: []int{},
+			},
+			wantT: 0,
+		},
+		{
+			name: "1",
+			args: args{
+				s: []int{1},
+			},
+			wantT: 1,
+		},
+		{
+			name: "2",
+			args: args{
+				s: []int{1, 2},
+			},
+			wantT: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotT := FirstOr(tt.args.s)
+			if !reflect.DeepEqual(gotT, tt.wantT) {
+				t.Errorf("First() gotT = %v, want %v", gotT, tt.wantT)
+			}
+		})
+	}
+}
+
+func TestLastOr(t *testing.T) {
+	type args struct {
+		s []int
+	}
+	tests := []struct {
+		name  string
+		args  args
+		wantT int
+	}{
+		// TODO: Add test cases.
+		{
+			name: "0",
+			args: args{
+				s: []int{},
+			},
+			wantT: 0,
+		},
+		{
+			name: "1",
+			args: args{
+				s: []int{1},
+			},
+			wantT: 1,
+		},
+		{
+			name: "2",
+			args: args{
+				s: []int{1, 2},
+			},
+			wantT: 2,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotT := LastOr(tt.args.s)
+			if !reflect.DeepEqual(gotT, tt.wantT) {
+				t.Errorf("First() gotT = %v, want %v", gotT, tt.wantT)
+			}
+		})
+	}
+}
+
+func TestIndexOr(t *testing.T) {
+	type args struct {
+		s []int
+		i int
+	}
+	tests := []struct {
+		name  string
+		args  args
+		wantT int
+	}{
+		// TODO: Add test cases.
+		{
+			name: "0",
+			args: args{
+				s: []int{},
+				i: 0,
+			},
+			wantT: 0,
+		},
+		{
+			name: "1-0",
+			args: args{
+				s: []int{1},
+				i: 0,
+			},
+			wantT: 1,
+		},
+		{
+			name: "1-1",
+			args: args{
+				s: []int{1},
+				i: 1,
+			},
+			wantT: 0,
+		},
+		{
+			name: "2-0",
+			args: args{
+				s: []int{1, 2},
+				i: 0,
+			},
+			wantT: 1,
+		},
+		{
+			name: "2-1",
+			args: args{
+				s: []int{1, 2},
+				i: 1,
+			},
+			wantT: 2,
+		},
+		{
+			name: "2-3",
+			args: args{
+				s: []int{1, 2},
+				i: 2,
+			},
+			wantT: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotT := IndexOr(tt.args.s, tt.args.i)
+			if !reflect.DeepEqual(gotT, tt.wantT) {
+				t.Errorf("First() gotT = %v, want %v", gotT, tt.wantT)
+			}
+		})
+	}
+}

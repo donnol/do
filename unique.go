@@ -48,3 +48,18 @@ func Index[T any](s []T, i int) (t T, ok bool) {
 	}
 	return s[i], true
 }
+
+func FirstOr[T any](s []T) (t T) {
+	t, _ = First(s)
+	return
+}
+
+func LastOr[T any](s []T) (t T) {
+	t, _ = Last(s)
+	return
+}
+
+func IndexOr[T any](s []T, i int) (t T) {
+	t, _ = Index(s, i)
+	return
+}
