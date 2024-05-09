@@ -198,8 +198,8 @@ func (p *mitmProxy) proxyConnect(w http.ResponseWriter, proxyReq *http.Request) 
 	tlsConfig := &tls.Config{
 		PreferServerCipherSuites: true,
 		CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP256},
-		MinVersion:               tls.VersionTLS13,
-		Certificates:             []tls.Certificate{tlsCert},
+		// MinVersion:               tls.VersionTLS13,
+		Certificates: []tls.Certificate{tlsCert},
 	}
 
 	tlsConn := tls.Server(clientConn, tlsConfig)
