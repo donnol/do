@@ -191,6 +191,8 @@ func (u toUser2) From(v fromUser) toUser2 {
 func TestMapFrom(t *testing.T) {
 	got := MapFrom([]fromUser{{Name: "jd"}, {Name: "jc"}}, NewToUser)
 	AssertSlicePtr(t, got, []*toUser{{"jd1"}, {"jc1"}})
+
+	AssertSlice(t, MapSlicePtr(got), []toUser{{"jd1"}, {"jc1"}})
 }
 
 func TestMapFrom2(t *testing.T) {

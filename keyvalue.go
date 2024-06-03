@@ -62,6 +62,14 @@ func MapFrom[T any, R interface{ From(T) }](s []T, initial func() R) []R {
 	return r
 }
 
+func MapSlicePtr[T *R, R any](s []T) []R {
+	r := make([]R, len(s))
+	for i := range s {
+		r[i] = *s[i]
+	}
+	return r
+}
+
 func MapFrom2[T any, R interface{ From(T) R }](s []T) []R {
 	var f R
 
