@@ -1,5 +1,18 @@
 package do
 
+// KeyValueGroupBy []int{{id: 1, from: gd}, {id: 2, from: gd}} -> map[string][]int{gd: []int{1, 2}}
+func KeyValueGroupBy[K comparable, E, V any](collection []E, iteratee func(item E) (K, V)) map[K][]V {
+	result := make(map[K][]V, len(collection))
+
+	for _, item := range collection {
+		key, value := iteratee(item)
+
+		result[key] = append(result[key], value)
+	}
+
+	return result
+}
+
 // KeyValueBy slice to map, key value specified by iteratee
 func KeyValueBy[K comparable, E, V any](collection []E, iteratee func(item E) (K, V)) map[K]V {
 	result := make(map[K]V, len(collection))

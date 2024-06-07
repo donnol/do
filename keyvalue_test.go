@@ -6,6 +6,56 @@ import (
 	"testing"
 )
 
+func TestKeyValueGroupBy(t *testing.T) {
+	type model struct {
+		id   int
+		from string
+	}
+	type args struct {
+		collection []model
+		iteratee   func(item model) (string, int)
+	}
+	tests := []struct {
+		name string
+		args args
+		want map[string][]int
+	}{
+		{
+			name: "group",
+			args: args{
+				collection: []model{
+					{
+						id:   1,
+						from: "gd",
+					},
+					{
+						id:   2,
+						from: "gd",
+					},
+					{
+						id:   3,
+						from: "gz",
+					},
+				},
+				iteratee: func(item model) (string, int) {
+					return item.from, item.id
+				},
+			},
+			want: map[string][]int{
+				"gd": {1, 2},
+				"gz": {3},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := KeyValueGroupBy(tt.args.collection, tt.args.iteratee); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("KeyValueGroupBy() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestKeyValueBy(t *testing.T) {
 	t.Parallel()
 
