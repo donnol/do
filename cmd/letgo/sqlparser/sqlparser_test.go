@@ -9,6 +9,9 @@ import (
 	"github.com/andreyvit/diff"
 	"github.com/donnol/do"
 
+	"github.com/pingcap/tidb/parser"
+	"github.com/pingcap/tidb/parser/ast"
+	"github.com/pingcap/tidb/parser/format"
 	_ "github.com/pingcap/tidb/types/parser_driver"
 )
 
@@ -755,4 +758,85 @@ func TestResultToJSONObjectTmpl2(t *testing.T) {
 		'createTime', create_time
 	)`
 	do.Assert(t, buf.String(), want, diff.LineDiff(buf.String(), want))
+}
+
+type tstruct struct {
+	modifyMap map[string]struct{}
+}
+
+func (t *tstruct) Enter(in ast.Node) (ast.Node, bool) {
+	switch node := in.(type) {
+	case *ast.TableName:
+		if _, ok := t.modifyMap["table|"+node.Name.L]; !ok {
+			node.Name.L += " u"
+			node.Name.O += " u"
+			t.modifyMap["table|"+node.Name.L] = struct{}{}
+		}
+	case *ast.SelectStmt:
+		node.From.TableRefs.Left.Accept(t)
+		for _, field := range node.Fields.Fields {
+			field.Expr.Accept(t)
+		}
+	case *ast.OrderByClause:
+		for _, item := range node.Items {
+			item.Expr.Accept(t)
+		}
+	case *ast.ColumnNameExpr:
+		if _, ok := t.modifyMap["column|"+node.Name.Name.L]; !ok {
+			node.Name.Name.L = "u." + node.Name.Name.L
+			node.Name.Name.O = "u." + node.Name.Name.O
+			t.modifyMap["column|"+node.Name.Name.L] = struct{}{}
+		}
+	case *ast.GroupByClause:
+		for _, item := range node.Items {
+			item.Expr.Accept(t)
+		}
+	case *ast.Assignment:
+	case *ast.ByItem:
+	case *ast.FieldList:
+	case *ast.HavingClause:
+	case *ast.AsOfClause:
+	case *ast.Join:
+	case *ast.Limit:
+	case *ast.OnCondition:
+	case *ast.SelectField:
+	case *ast.TableRefsClause:
+	case *ast.TableSource:
+	case *ast.SetOprSelectList:
+	case *ast.WildCardField:
+	case *ast.WindowSpec:
+	case *ast.PartitionByClause:
+	case *ast.FrameClause:
+	case *ast.FrameBound:
+	}
+
+	return in, false
+}
+
+func (t *tstruct) Leave(in ast.Node) (ast.Node, bool) {
+	return in, true
+}
+
+func TestSetSelectAlias(t *testing.T) {
+	s := &tstruct{
+		modifyMap: make(map[string]struct{}),
+	}
+
+	sql := `select id, name from t_user where id = 1 group by id order by id desc limit 1`
+	p := parser.New()
+
+	nodes, _, err := p.ParseSQL(sql)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	buf := new(bytes.Buffer)
+	for _, node := range nodes {
+		node.Accept(s)
+		node.Restore(format.NewRestoreCtx(format.DefaultRestoreFlags, buf))
+		do.Assert(t, node.Text(), sql)
+	}
+
+	want := "SELECT `u.id`,`u.name` FROM `t_user u` WHERE `u.id`=1 GROUP BY `u.id` ORDER BY `u.id` DESC LIMIT 1"
+	do.Assert(t, buf.String(), want)
 }
