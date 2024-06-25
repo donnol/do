@@ -168,9 +168,20 @@ func TestStruct_Gen(t *testing.T) {
 				"		Name string `json:\"name\" db:\"name\"` // 名称" + "\n" +
 				"		CreatedAt time.Time `json:\"createdAt\" db:\"created_at\"` // 创建时间" + "\n" +
 				"		UpdatedAt time.Time `json:\"updatedAt\" db:\"updated_at\"` // 更新时间" + "\n" +
+				"" + "\n" +
+				"		useAlias bool" + "\n" +
+				"		alias    string" + "\n" +
 				"	}" + "\n	\n" +
 				`	func (UserTable) TableName() string {
 		return "user_table"
+	}
+
+	func (s UserTable) UseAlias(alias ...string) UserTable {
+		s.useAlias = true
+		if len(alias) > 0 {
+			s.alias = alias[0]
+		}
+		return s
 	}
 	
 	func (s UserTable) Columns() []string {
@@ -206,11 +217,6 @@ func TestStruct_Gen(t *testing.T) {
 		UpdatedAt string // field: updated_at
 	}
 	
-	// FuzzWrap make v become %v%
-	func (_UserTableNameHelper) FuzzWrap(v string) string {
-		return "%" + v + "%"
-	}
-	
 	func (_UserTableNameHelper) Columns() []string {
 		return []string{
 			"id",
@@ -220,12 +226,26 @@ func TestStruct_Gen(t *testing.T) {
 		}
 	}
 	
-	func (UserTable) NameHelper() _UserTableNameHelper {
+	func (s UserTable) NameHelper() _UserTableNameHelper {
+		withAlias := func(field string, alias string) string {
+			if alias == "" {
+				return field
+			}
+			return alias + "." + field
+		}
+		alias := ""
+		if s.useAlias {
+			if s.alias != "" {
+				alias = s.alias
+			} else {
+				alias = s.TableName()
+			}
+		}
 		return _UserTableNameHelper{
-			Id: "id",
-			Name: "name",
-			CreatedAt: "created_at",
-			UpdatedAt: "updated_at",
+			Id: withAlias("id", alias),
+			Name: withAlias("name", alias),
+			CreatedAt: withAlias("created_at", alias),
+			UpdatedAt: withAlias("updated_at", alias),
 		}
 	}
 	
@@ -293,9 +313,20 @@ updated_at timestamp not null comment '更新时间'
 				"		Name string `json:\"name\" db:\"name\"` // 名称" + "\n" +
 				"		CreatedAt time.Time `json:\"createdAt\" db:\"created_at\"` // 创建时间" + "\n" +
 				"		UpdatedAt time.Time `json:\"updatedAt\" db:\"updated_at\"` // 更新时间" + "\n" +
+				"" + "\n" +
+				"		useAlias bool" + "\n" +
+				"		alias    string" + "\n" +
 				"	}" + "\n	\n" +
 				`	func (User) TableName() string {
 		return "user"
+	}
+
+	func (s User) UseAlias(alias ...string) User {
+		s.useAlias = true
+		if len(alias) > 0 {
+			s.alias = alias[0]
+		}
+		return s
 	}
 	
 	func (s User) Columns() []string {
@@ -331,11 +362,6 @@ updated_at timestamp not null comment '更新时间'
 		UpdatedAt string // field: updated_at
 	}
 	
-	// FuzzWrap make v become %v%
-	func (_UserNameHelper) FuzzWrap(v string) string {
-		return "%" + v + "%"
-	}
-	
 	func (_UserNameHelper) Columns() []string {
 		return []string{
 			"id",
@@ -345,12 +371,26 @@ updated_at timestamp not null comment '更新时间'
 		}
 	}
 	
-	func (User) NameHelper() _UserNameHelper {
+	func (s User) NameHelper() _UserNameHelper {
+		withAlias := func(field string, alias string) string {
+			if alias == "" {
+				return field
+			}
+			return alias + "." + field
+		}
+		alias := ""
+		if s.useAlias {
+			if s.alias != "" {
+				alias = s.alias
+			} else {
+				alias = s.TableName()
+			}
+		}
 		return _UserNameHelper{
-			Id: "id",
-			Name: "name",
-			CreatedAt: "created_at",
-			UpdatedAt: "updated_at",
+			Id: withAlias("id", alias),
+			Name: withAlias("name", alias),
+			CreatedAt: withAlias("created_at", alias),
+			UpdatedAt: withAlias("updated_at", alias),
 		}
 	}
 	
@@ -387,9 +427,20 @@ updated_at timestamp not null comment '更新时间'
 				"		Id uint `json:\"id\" db:\"id\"` // id" + "\n" +
 				"		Name string `json:\"name\" db:\"name\"` // 名称" + "\n" +
 				"		CreatedAt time.Time `json:\"createdAt\" db:\"created_at\"` // 创建时间" + "\n" +
+				"" + "\n" +
+				"		useAlias bool" + "\n" +
+				"		alias    string" + "\n" +
 				"	}" + "\n	\n" +
 				`	func (User) TableName() string {
 		return "user"
+	}
+
+	func (s User) UseAlias(alias ...string) User {
+		s.useAlias = true
+		if len(alias) > 0 {
+			s.alias = alias[0]
+		}
+		return s
 	}
 	
 	func (s User) Columns() []string {
@@ -422,11 +473,6 @@ updated_at timestamp not null comment '更新时间'
 		CreatedAt string // field: created_at
 	}
 	
-	// FuzzWrap make v become %v%
-	func (_UserNameHelper) FuzzWrap(v string) string {
-		return "%" + v + "%"
-	}
-	
 	func (_UserNameHelper) Columns() []string {
 		return []string{
 			"id",
@@ -435,11 +481,25 @@ updated_at timestamp not null comment '更新时间'
 		}
 	}
 	
-	func (User) NameHelper() _UserNameHelper {
+	func (s User) NameHelper() _UserNameHelper {
+		withAlias := func(field string, alias string) string {
+			if alias == "" {
+				return field
+			}
+			return alias + "." + field
+		}
+		alias := ""
+		if s.useAlias {
+			if s.alias != "" {
+				alias = s.alias
+			} else {
+				alias = s.TableName()
+			}
+		}
 		return _UserNameHelper{
-			Id: "id",
-			Name: "name",
-			CreatedAt: "created_at",
+			Id: withAlias("id", alias),
+			Name: withAlias("name", alias),
+			CreatedAt: withAlias("created_at", alias),
 		}
 	}
 	

@@ -19,10 +19,21 @@ const (
 		{{- range $k,$v := .Fields}}
 		{{$v.FieldName}} {{$v.FieldType}} {{$v.FieldTag}} // {{$v.FieldComment -}}
 		{{- end}}
+
+		useAlias bool
+		alias    string
 	}
 	
 	func ({{.StructName}}) TableName() string {
 		return "{{.TableName}}"
+	}
+
+	func (s {{.StructName}}) UseAlias(alias ...string) {{.StructName}} {
+		s.useAlias = true
+		if len(alias) > 0 {
+			s.alias = alias[0]
+		}
+		return s
 	}
 	
 	func (s {{.StructName}}) Columns() []string {
@@ -55,11 +66,6 @@ const (
 		{{- end}}
 	}
 	
-	// FuzzWrap make v become %v%
-	func (_{{.StructName}}NameHelper) FuzzWrap(v string) string {
-		return "%" + v + "%"
-	}
-	
 	func (_{{.StructName}}NameHelper) Columns() []string {
 		return []string{
 			{{- range $k,$v := .Fields}}
@@ -68,10 +74,24 @@ const (
 		}
 	}
 	
-	func ({{.StructName}}) NameHelper() _{{.StructName}}NameHelper {
+	func (s {{.StructName}}) NameHelper() _{{.StructName}}NameHelper {
+		withAlias := func(field string, alias string) string {
+			if alias == "" {
+				return field
+			}
+			return alias + "." + field
+		}
+		alias := ""
+		if s.useAlias {
+			if s.alias != "" {
+				alias = s.alias
+			} else {
+				alias = s.TableName()
+			}
+		}
 		return _{{.StructName}}NameHelper{
 			{{- range $k,$v := .Fields}}
-			{{.FieldName}}: "{{.DBField -}}",
+			{{.FieldName}}: withAlias("{{.DBField -}}", alias),
 			{{- end}}
 		}
 	}
