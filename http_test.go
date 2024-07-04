@@ -197,3 +197,54 @@ func TestDoHTTPRequest_RespHeader(t *testing.T) {
 		})
 	}
 }
+
+type resultCheck struct {
+	BgQuality int `json:"BgQuality"`
+}
+
+func (r resultCheck) Check() error {
+	if r.BgQuality == 50 {
+		return fmt.Errorf("bad BgQuality")
+	}
+	return nil
+}
+
+func TestDoHTTPRequest_CheckResult(t *testing.T) {
+	type args[R any] struct {
+		client        *http.Client
+		method        string
+		link          string
+		body          io.Reader
+		header        http.Header
+		codeChecker   CodeChecker
+		extractResult ResultExtractor[resultCheck]
+	}
+	type testCase[R any] struct {
+		name    string
+		args    args[R]
+		wantErr bool
+	}
+	tests := []testCase[result]{
+		{
+			name: "1",
+			args: args[result]{
+				method:        http.MethodGet,
+				link:          "https://www.bing.com/hp/api/model",
+				body:          nil,
+				codeChecker:   CodeIs200,
+				extractResult: JSONExtractor[resultCheck],
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := SendHTTPRequest(tt.args.client, tt.args.method, tt.args.link, tt.args.body, tt.args.header, tt.args.codeChecker, tt.args.extractResult)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DoHTTPRequest() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			Assert(t, err.Error(), "bad BgQuality")
+		})
+	}
+}

@@ -110,6 +110,14 @@ func SendHTTPRequest[R any](
 		e.Extract(h)
 	}
 
+	// check result
+	switch rr := any(r).(type) {
+	case interface{ Check() error }:
+		if err = rr.Check(); err != nil {
+			return r, err
+		}
+	}
+
 	return r, nil
 }
 
