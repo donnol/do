@@ -1,6 +1,7 @@
 package do
 
 import (
+	"fmt"
 	"log"
 	"runtime/debug"
 )
@@ -30,7 +31,20 @@ func GoR[P, R any](c C, p P, f func(C, P) R) <-chan R {
 func CallInDefRec[P, R any](c C, p P, f func(C, P) R) R {
 	defer func() {
 		if v := recover(); v != nil {
-			log.Printf("panic stack: %s", debug.Stack())
+			log.Printf("panic: %v \nstack: %s", v, debug.Stack())
+		}
+	}()
+
+	return f(c, p)
+}
+
+// CallInDefRec2 run f with defer recover to catch panic
+func CallInDefRec2[P, R any](c C, p P, f func(C, P) (R, E)) (r R, e E) {
+	defer func() {
+		if v := recover(); v != nil {
+			e = fmt.Errorf("failed: %v", v)
+
+			log.Printf("panic: %v \nstack: %s", v, debug.Stack())
 		}
 	}()
 
