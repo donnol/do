@@ -110,7 +110,7 @@ func Log5[T1, T2, T3, T4, T5 any](a1 T1, a2 T2, a3 T3, a4 T4, a5 T5, err error) 
 
 func logError(err error) {
 	if err != nil {
-		log.Println(NewError(efrom(err)))
+		log.Output(3, fmt.Sprintln(NewError(efrom(err))))
 	}
 }
 

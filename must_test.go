@@ -3,6 +3,7 @@ package do_test
 import (
 	"errors"
 	"fmt"
+	"log"
 	"reflect"
 	"testing"
 
@@ -168,6 +169,7 @@ func TestMustN(t *testing.T) {
 }
 
 func TestLog1(t *testing.T) {
+	log.SetFlags(log.Llongfile | log.LstdFlags)
 	type args struct {
 		a1  int
 		err error
