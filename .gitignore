@@ -16,6 +16,8 @@
 
 testdata/test.db
 testdata/cert*
+testdata/*.jpg
+testdata/*.png
 cmd/letgo/sqlparser/test.go
 
 go.work

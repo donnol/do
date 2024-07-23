@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"image/jpeg"
+	"image/png"
 	"io"
 	"log"
 	"net"
@@ -15,6 +17,8 @@ import (
 	"github.com/donnol/do"
 	"github.com/donnol/do/cmd/letgo/sqlparser"
 	"github.com/donnol/do/parser"
+	"github.com/gen2brain/go-fitz"
+	gim "github.com/ozankasikci/go-image-merge"
 	"github.com/urfave/cli/v2"
 )
 
@@ -604,6 +608,94 @@ var (
 				}
 
 				return nil
+			},
+		},
+		{
+			Name:  "pdf2image",
+			Usage: "letgo pdf2image --out=./images test.pdf",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "out",
+					Aliases: []string{"o"},
+					Usage:   "specify output dir",
+				},
+				&cli.StringFlag{
+					Name:        "format",
+					DefaultText: "jpg",
+					Value:       "jpg",
+					Usage:       "specify image format, like png or jpg",
+				},
+				&cli.IntFlag{
+					Name:  "bypage",
+					Value: 1,
+					Usage: "specify how many pages to a single image",
+				},
+			},
+			Action: func(c *cli.Context) (err error) {
+				args := c.Args()
+				if args.Len() < 0 {
+					return fmt.Errorf("empty args")
+				}
+
+				pdf := args.Get(0)
+				doc := do.Must1(fitz.New(pdf))
+				defer doc.Close()
+
+				base := filepath.Base(pdf)
+				fn := strings.TrimSuffix(base, filepath.Ext(base))
+
+				dir := c.String("out")
+				do.Must(os.MkdirAll(dir, os.ModePerm))
+
+				format := c.String("format")
+				if format != "" {
+					if !do.In([]string{"png", "jpg"}, format) {
+						return fmt.Errorf("only support png or jpg format")
+					}
+				}
+				save := func(grids []*gim.Grid, n, bypage int) {
+					f := do.Must1(os.Create(filepath.Join(dir, fmt.Sprintf("%s%03d.%s", fn, n, format))))
+					defer f.Close()
+
+					rgba := do.Must1(gim.New(grids, 1, bypage).Merge())
+
+					switch format {
+					case "png":
+						do.Must(png.Encode(f, rgba))
+					default:
+						do.Must(jpeg.Encode(f, rgba, &jpeg.Options{Quality: jpeg.DefaultQuality}))
+					}
+				}
+
+				// Extract pages as images
+				bypage := c.Int("bypage")
+				grids := []*gim.Grid{}
+				n := 1
+				for ; n <= doc.NumPage(); n++ {
+					img, err := doc.Image(n - 1)
+					if err != nil {
+						panic(err)
+					}
+					grids = append(grids, &gim.Grid{Image: img})
+
+					if bypage > 1 && n%bypage != 0 {
+						continue
+					}
+
+					save(grids, n, bypage)
+
+					grids = []*gim.Grid{}
+				}
+				if len(grids) > 0 {
+					if bypage > len(grids) {
+						n -= (bypage - len(grids))
+						bypage = len(grids)
+					}
+
+					save(grids, n, bypage)
+				}
+
+				return
 			},
 		},
 	}

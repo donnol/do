@@ -60,6 +60,8 @@ require (
 require (
 	github.com/brianvoe/gofakeit/v6 v6.22.0
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/gen2brain/go-fitz v1.23.7
+	github.com/ozankasikci/go-image-merge v0.3.1
 	github.com/pingcap/tidb v1.1.0-beta.0.20221126021158-6b02a5d8ba7d
 	github.com/pingcap/tidb/parser v0.0.0-20221126021158-6b02a5d8ba7d
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
