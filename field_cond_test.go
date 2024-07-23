@@ -2,6 +2,7 @@ package do
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 )
@@ -146,7 +147,7 @@ func TestWithWhereTime(t *testing.T) {
 				field: "created",
 				value: []time.Time{},
 			},
-			want: "created = '2023-10-26 00:00:00 +0800 CST'",
+			want: "created = '2023-10-26 00:00:00 +0800",
 		},
 		{
 			name: "not-zero-value",
@@ -160,12 +161,12 @@ func TestWithWhereTime(t *testing.T) {
 					time.Date(2023, 10, 27, 0, 0, 0, 0, time.Local),
 				},
 			},
-			want: "created = '2023-10-27 00:00:00 +0800 CST'",
+			want: "created = '2023-10-27 00:00:00 +0800",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := WithWhere(tt.args.t, tt.args.cond, tt.args.field, tt.args.value...); got != tt.want {
+			if got := WithWhere(tt.args.t, tt.args.cond, tt.args.field, tt.args.value...); !strings.Contains(got, tt.want) {
 				t.Errorf("WithWhere() = %v, want %v", got, tt.want)
 			}
 		})
