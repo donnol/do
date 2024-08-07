@@ -185,3 +185,115 @@ func TestFactorialBig(t *testing.T) {
 		})
 	}
 }
+
+func TestBinPow(t *testing.T) {
+	type args struct {
+		a int
+		b int
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			name: "1**2",
+			args: args{
+				a: 1,
+				b: 2,
+			},
+			want: 1,
+		},
+		{
+			name: "3**4",
+			args: args{
+				a: 3,
+				b: 4,
+			},
+			want: 81,
+		},
+		{
+			name: "10**8",
+			args: args{
+				a: 10,
+				b: 8,
+			},
+			want: 100000000,
+		},
+		{
+			name: "18**8",
+			args: args{
+				a: 18,
+				b: 8,
+			},
+			want: 11019960576,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := BinPow(tt.args.a, tt.args.b); got != tt.want {
+				t.Errorf("BinPow() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBinPowBig(t *testing.T) {
+	type args struct {
+		a int
+		b int
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "1**2",
+			args: args{
+				a: 1,
+				b: 2,
+			},
+			want: "1",
+		},
+		{
+			name: "3**4",
+			args: args{
+				a: 3,
+				b: 4,
+			},
+			want: "81",
+		},
+		{
+			name: "10**8",
+			args: args{
+				a: 10,
+				b: 8,
+			},
+			want: "100000000",
+		},
+		{
+			name: "18**8",
+			args: args{
+				a: 18,
+				b: 8,
+			},
+			want: "11019960576",
+		},
+		{
+			name: "18**18",
+			args: args{
+				a: 18,
+				b: 18,
+			},
+			want: "39346408075296537575424",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := BinPowBig(tt.args.a, tt.args.b); got != tt.want {
+				t.Errorf("BinPow() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

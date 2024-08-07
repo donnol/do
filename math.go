@@ -59,3 +59,30 @@ func FactorialBig(n int) string {
 	}
 	return s.String()
 }
+
+// BinPow return a**b with binary pow. if `a` or `b` is very big, use `BinPowBig` instead
+func BinPow(a, b int) int {
+	res := 1
+	for b > 0 {
+		if b&1 != 0 {
+			res = res * a
+		}
+		a = a * a
+		b >>= 1
+	}
+	return res
+}
+
+// BinPow return a**b with binary pow
+func BinPowBig(a, b int) string {
+	res := big.NewInt(1)
+	ai := big.NewInt(int64(a))
+	for b > 0 {
+		if b&1 != 0 {
+			res = res.Mul(res, ai)
+		}
+		ai = ai.Mul(ai, ai)
+		b >>= 1
+	}
+	return res.String()
+}
