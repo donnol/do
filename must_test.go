@@ -213,3 +213,59 @@ func TestIgnore(t *testing.T) {
 	do.Assert(t, r1, 1)
 	do.Assert(t, r2, "2")
 }
+
+func TestReturn(t *testing.T) {
+	sum := func(a, b int) (int, error) {
+		return a + b, nil
+	}
+
+	// :=
+	// 存在新变量，展开后继续是`:=`
+	{
+		func() error {
+			r := do.Return1(sum(1, 2))
+
+			do.Assert(t, r, 3)
+			return nil
+		}()
+
+		// run `letgo expand` to expand the `do.Return1` into:
+		func() error {
+			r, err := sum(1, 2)
+			if err != nil {
+				return err
+			}
+
+			do.Assert(t, r, 3)
+			return nil
+		}()
+	}
+
+	// =
+	// 不存在新变量，展开后需要添加err变量声明
+	{
+		func() error {
+			var r int
+			_ = r
+
+			r = do.Return1(sum(1, 2))
+
+			do.Assert(t, r, 3)
+			return nil
+		}()
+
+		// run `letgo expand` to expand the `do.Return1` into:
+		func() error {
+			var r int
+
+			var err error
+			r, err = sum(1, 2)
+			if err != nil {
+				return err
+			}
+
+			do.Assert(t, r, 3)
+			return nil
+		}()
+	}
+}

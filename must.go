@@ -138,3 +138,7 @@ func Ignore4[T1, T2, T3, T4, T5 any](a1 T1, a2 T2, a3 T3, a4 T4, i T5) (T1, T2, 
 func Ignore5[T1, T2, T3, T4, T5, T6 any](a1 T1, a2 T2, a3 T3, a4 T4, a5 T5, i T6) (T1, T2, T3, T4, T5) {
 	return a1, a2, a3, a4, a5
 }
+
+func Return1[T any](a1 T, err error) T {
+	return a1
+}
