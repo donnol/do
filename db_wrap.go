@@ -116,6 +116,35 @@ func WrapSQLConn(
 	return nil
 }
 
+func WrapSQLConnV[R any](
+	ctx context.Context,
+	db *sql.DB,
+	f func(
+		ctx context.Context,
+		conn *sql.Conn,
+	) (R, error),
+) (r R, err error) {
+
+	// 获取连接，并在返回前释放
+	conn, err := db.Conn(ctx)
+	if err != nil {
+		return
+	}
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Printf("close conn failed: %v", err)
+		}
+	}()
+
+	r, err = f(ctx, conn)
+	if err != nil {
+		funcName := FuncName(2, true)
+		return r, fmt.Errorf("[DB] call in %s failed: %w", funcName, err)
+	}
+
+	return
+}
+
 // WrapSQLQueryRows query by stmt and args, return values with dest
 // only support one row
 func WrapSQLQueryRows(

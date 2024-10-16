@@ -66,3 +66,35 @@ func TestWrapTxV(t *testing.T) {
 		t.Errorf("bad case of name, %v != %v", r.Name, "")
 	}
 }
+
+func TestWrapSQLConnV(t *testing.T) {
+	ctx := context.Background()
+	r, err := do.WrapSQLConnV[UserForDB](ctx, tdb, func(ctx context.Context, tx *sql.Conn) (UserForDB, error) {
+
+		// 只拿id列
+		finder := &finderOfUserOnlyId{
+			id: 1,
+		}
+		var r UserForDB
+		do.Must(do.FindFirst(tx, finder, &r))
+		if r.Id != 1 {
+			t.Errorf("bad case of id, %v != %v", r.Id, 1)
+		}
+		if r.Name != "" {
+			t.Errorf("bad case of name, %v != %v", r.Name, "")
+		}
+
+		return r, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%+v", r)
+
+	if r.Id != 1 {
+		t.Errorf("bad case of id, %v != %v", r.Id, 1)
+	}
+	if r.Name != "" {
+		t.Errorf("bad case of name, %v != %v", r.Name, "")
+	}
+}
