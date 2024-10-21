@@ -56,7 +56,7 @@ func succeed2Step(cb *TwoStepCircuitBreaker[any, any]) error {
 
 func fail(cb *CircuitBreaker[any, any]) error {
 	msg := "fail"
-	_, err := cb.Execute(nil, func(any) (interface{}, error) { return nil, fmt.Errorf(msg) })
+	_, err := cb.Execute(nil, func(any) (interface{}, error) { return nil, fmt.Errorf("%s", msg) })
 	if err.Error() == msg {
 		return nil
 	}

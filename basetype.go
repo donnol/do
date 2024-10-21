@@ -25,6 +25,12 @@ type (
 		Page     int `json:"page" form:"page"`         // page No.
 		PageSize int `json:"pageSize" form:"pageSize"` // page size
 	}
+	PageCond[T, C any] struct {
+		Table T
+
+		Cond C
+	}
+
 	PageResult[T any] struct {
 		Total int64 `json:"total"` // total
 
@@ -34,6 +40,17 @@ type (
 		List []T `json:"list"` // list
 	}
 )
+
+func PageCondFrom[T, C any](t T, c C) (p PageCond[T, C]) {
+	return PageCond[T, C]{
+		Table: t,
+		Cond:  c,
+	}
+}
+
+func (p PageCond[T, C]) Unpack() (T, C) {
+	return p.Table, p.Cond
+}
 
 func (p Pager) Limit() int {
 	return p.PageSize
