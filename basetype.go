@@ -37,7 +37,7 @@ type (
 		ListResult[T]
 	}
 	ListResult[T any] struct {
-		List []T `json:"list"` // list
+		List []T `json:"list" fakesize:"1"` // list
 	}
 )
 
