@@ -100,6 +100,10 @@ func TestWorkerWithTimeout(t *testing.T) {
 				// 模拟业务逻辑 -- 为了留出间隔检查超时，如果是大任务需要分批执行；
 				log.Printf("runing...")
 				time.Sleep(500 * time.Millisecond)
+
+				// 但是，如果执行的任务拆分不了呢，它就是一个长时间的任务呢？
+				// 那就没机会检查ctx.Done()了，也就没机会退出执行。
+				// 那也只能让它一直执行下去了，直到它结束了。
 			}
 		}
 	}, 1*time.Second, func(err error) {
